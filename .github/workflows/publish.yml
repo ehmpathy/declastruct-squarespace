@@ -1,0 +1,21 @@
+name: publish
+
+on:
+  push:
+    tags:
+      - v*
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }} # per [workflow] x [branch, tag]
+  cancel-in-progress: true #  cancel workflows for non-latest commits
+
+jobs:
+  test:
+    uses: ./.github/workflows/.test.yml
+    with:
+      creds-aws-region: us-east-1
+      creds-aws-role-arn: arn:aws:iam::805192865516:role/ehmpathy-demo-oidc
+
+  publish:
+    uses: ./.github/workflows/.publish-npm.yml
+    needs: [test]

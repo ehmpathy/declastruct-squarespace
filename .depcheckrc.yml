@@ -1,0 +1,19 @@
+ignores:
+  - depcheck
+  - declapract
+  - declapract-typescript-ehmpathy
+  - '@commitlint/config-conventional'
+  - serverless-prune-plugin
+  - husky
+  - if-env
+  - '@swc/core'
+  - '@swc/jest'
+  - rhachet
+  - "@tsconfig/node20"
+  - "@tsconfig/strictest"
+  - "@biomejs/biome"
+  - esbuild-register
+  - tsx
+  - "@src/*"
+  - "@src/.*"
+  - tsc-alias
