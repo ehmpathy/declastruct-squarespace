@@ -1,0 +1,26 @@
+bootup your mechanic's role via `npx rhachet roles boot --repo ehmpathy --role mechanic`
+
+start or continue to execute
+- phase0 to phaseN
+of roadmap
+- .behavior/v2025_12_17.domain-transfer/4.1.roadmap.v1.i1.md
+
+ref:
+- .behavior/v2025_12_17.domain-transfer/3.3.blueprint.v1.i1.md
+
+---
+
+reference the below for full context
+- .behavior/v2025_12_17.domain-transfer/0.wish.md
+- .behavior/v2025_12_17.domain-transfer/3.1.research.domain._.v1.i1.md
+- .behavior/v2025_12_17.domain-transfer/3.1.research.infra.remote_state_cache.v1.i1.md
+- .behavior/v2025_12_17.domain-transfer/3.2.distill.domain._.v1.i1.md
+- .behavior/v2025_12_17.domain-transfer/3.2.distill.domain._.v2.i1.md
+- .behavior/v2025_12_17.domain-transfer/3.3.blueprint.v1.i1.md
+
+---
+
+track your progress
+
+emit todos and check them off into
+- .behavior/v2025_12_17.domain-transfer/5.1.execution.phase0_to_phaseN.v1.i1.md

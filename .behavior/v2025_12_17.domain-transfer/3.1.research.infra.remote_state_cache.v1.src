@@ -1,0 +1,227 @@
+research the infra patterns and techniques declared below that will support the fulfillment of
+- our wish in .behavior/v2025_12_17.domain-transfer/1.vision.md
+
+along with the context from on our research in
+- .behavior/v2025_12_17.domain-transfer/3.1.research.domain._.v1.i1.md
+
+
+---
+
+emit into .behavior/v2025_12_17.domain-transfer/3.1.research.infra.remote_state_cache.v1.i1.md
+
+
+----
+
+note! this is a private repo you'll need to access via the `gh` cli tool
+
+we have access to it. if you have trouble accessing it via `gh`, let me know and i'll resolve that
+
+if you have any issues accessing via `gh`, halt and tell me
+
+----
+----
+----
+
+
+playwrite reads are going to  be slow, since browser requests are always slow
+
+therefore, we'll need to follow remote-state cache best practices, like those established by declastruct-google-ads
+
+for example
+
+```ts
+
+const registration = withRemoteStateMutationRegistration(addAdGroup, {
+  name: 'addAdGroup',
+});
+const { execute } = registration;
+
+export {
+  execute as addAdGroup, // ensure the registered execute is called, to kickoff remote-state triggers
+};
+
+// invalidate the 'list ad groups' query, since this adds new ad groups
+addTriggerToListAdGroups({
+  invalidatedBy: {
+    mutation: registration,
+    affects: ({ mutationInput, cachedQueryKeys }) => {
+      return {
+        inputs: [
+          [
+            // invalidate searches made for this campaign
+            {
+              filter: {
+                campaignResourceName: [
+                  'customers',
+                  mutationInput[1].agentOptions.account.customerId,
+                  'campaigns',
+                  mutationInput[0].campaignId,
+                ].join('/'),
+              },
+            },
+            mutationInput[1],
+          ],
+          [
+            // invalidate searches made without any filter -> this new ad group will have been added
+            {},
+            mutationInput[1],
+          ],
+        ],
+        keys: cachedQueryKeys.filter((key) => key.includes('limit')), // these are the list searches made with filters w/ pagination => typically includes ones that search by all
+      };
+    },
+  },
+});
+
+// invalidate the 'list adgroup criteria' query, since this adds new adgroup criteria
+addTriggerToListAdGroupCriteria({
+  invalidatedBy: {
+    mutation: registration,
+    affects: ({ mutationInput, cachedQueryKeys }) => {
+      return {
+        inputs: [
+          [
+            // invalidate "listAdGroupCriteria" searches made without any filter -> new ones will have been added
+            {},
+            mutationInput[1],
+          ],
+        ],
+        keys: [
+          // invalidate the queries made for "find all" without filters and with limits
+          ...cachedQueryKeys.filter((key) => key.includes('limit')),
+
+          // invalidate the searches made for this campaign too, since it now ads it
+          ...cachedQueryKeys.filter((key) =>
+            key.includes(mutationInput[0].campaignId),
+          ),
+        ],
+      };
+    },
+  },
+});
+
+```
+
+check out this and other examples of how to power gets & sets w/ maximum cache on-read-hits && on-write-invalidations
+
+at these links
+- https://github.com/ahbode/svc-ads-online-search/blob/779696c63a42f410ba01167891a5d3d9f2d45dcb/src/__nonpublished_modules__/google-ads-puppeteer-client/src/logic/adsActions/adGroup/addAdGroup.ts#L190
+- https://github.com/ahbode/svc-ads-online-search/blob/7bb213508e6defd420bc59b2f749004426419e38/src/__nonpublished_modules__/google-ads-puppeteer-client/src/logic/adsActions/adGroupCriterion/listAdGroupCriteria.ts#L122
+- https://github.com/ahbode/svc-ads-online-search/blob/8590b2f2c1cf5a8633a1a910be3dafa391d158ab/src/__nonpublished_modules__/google-ads-puppeteer-client/src/logic/performance/withRemoteStateCaching.ts#L28-L30
+
+though, note, with-simple-caching has been renamed to with-simple-cache
+
+the rest of the concepts are the same!
+
+---
+
+note! this is a private repo you'll need to access via the `gh` cli tool
+
+we have access to it. if you have trouble accessing it via `gh`, let me know and i'll resolve that
+
+
+---
+
+be sure to also include research about how we manage browsers + pages in that project. it used puppeteer, but the same concepts should apply to playwrite
+
+e.g.,
+
+https://github.com/ahbode/svc-ads-online-search/blob/75b8b218c1103b448cdb12e822a27d71462604ab/src/__nonpublished_modules__/google-ads-puppeteer-client/src/logic/webActions/access/withNewLoggedInBrowserPage.ts#L29
+
+```ts
+import { Page } from 'puppeteer-core';
+import { Procedure, ProcedureContext, ProcedureInput } from 'visualogic';
+import { withExtendableCaching } from 'with-simple-caching';
+
+import { GoogleAdsPuppeteerClientAgentOptions } from '../../../domain/constants';
+import { KEEP_BROWSER_ALIVE } from '../pupetteer/getHeadlessBrowser';
+import { getNewLoggedInBrowserPage } from './getNewLoggedInBrowserPage';
+
+/**
+ * run an operation with a logged in browser page
+ *
+ * relevance
+ * - ensures that only one operation is being done at a time
+ *   - prevents resource hogging (doing 100 operations in parallel can be taxing on a machine)
+ *   - prevents unsupported activity (websites may be built w/ assumption that only one operation will be done per browser)
+ *   - prevents suspicious activity (it may trigger alarms on the website when seeing an agent doing multiple operations in parallel)
+ * - correctly gets the page from the browser
+ *   - reuses the existing open browser if possible
+ *   - correctly creates a new browser, if needed
+ * - correctly closes the page after completion
+ *   - frees up resources by closing the page after being done with it
+ */
+export const withNewLoggedInBrowserPage = <
+  TInput,
+  TContext extends {
+    page: Page;
+    agentOptions: GoogleAdsPuppeteerClientAgentOptions;
+  },
+  TOutput,
+>(
+  logic: Procedure<TInput, TContext, TOutput>, // (input: TInput, context: TContext) => Promise<TOutput>,
+  options?: {
+    /**
+     * allow specifying a pagekey for reusing a page across requests, to opt into continuing from the page where another operation left off, by namespace
+     *
+     * relevance
+     * - google-ads is a single-page-app with a large bulk data load on-page-load
+     *   - initial page load is very slow
+     *   - subsequent clientside navigation is fast
+     * - if pages know that they're comfortable starting where another operation left off, they should be able to
+     *   - for example, executeScript operation only uses one single page
+     */
+    reusePageKey?: string;
+  },
+) => {
+  return async (
+    input: ProcedureInput<typeof logic>,
+    context: Omit<ProcedureContext<typeof logic>, 'page'>,
+  ): Promise<ReturnType<typeof logic>> => {
+    // within the browser bottleneck
+    return context.agentOptions.browser.bottleneck.schedule(async () => {
+      // get a new page
+      const getNewPage = options?.reusePageKey
+        ? withExtendableCaching(getNewLoggedInBrowserPage, {
+            cache: context.agentOptions.browser.cache,
+            serialize: {
+              key: (input) =>
+                [
+                  // namespace the reuse-page-key
+                  options.reusePageKey,
+
+                  // to the browser login credentials this is operating under
+                  JSON.stringify({
+                    credentials: context.agentOptions.credentials.googleAdsUi,
+                  }),
+
+                  // and the account this is operating under
+                  context.agentOptions.account.customerId,
+                ].join('.'),
+            },
+          })
+        : {
+            execute: () => getNewLoggedInBrowserPage(context.agentOptions),
+            invalidate: undefined,
+          };
+      const page = await getNewPage.execute(context.agentOptions);
+
+      // execute the logic, w/ page input injected, and ensure to close page afterwards
+      try {
+        await page.bringToFront(); // bring the page to front, now that we're gonna use it (if page is not in front, chromium will not actually execute our requests against it in some cases)
+        const result = await logic(input, {
+          ...context,
+          page,
+        } as TContext); // run the request
+        if (!options?.reusePageKey && !KEEP_BROWSER_ALIVE) await page.close(); // close the page if reuse key wasn't specified
+        return result; // return the result
+      } catch (error) {
+        if (getNewPage.invalidate)
+          getNewPage.invalidate({ forInput: [context.agentOptions] }); // invalidate the cached page reference if error was thrown
+        if (!KEEP_BROWSER_ALIVE) await page.close(); // and close the page unless user elicitly asked to leave everything open
+        throw error; // pass up the error
+      }
+    });
+  };
+};
+```
