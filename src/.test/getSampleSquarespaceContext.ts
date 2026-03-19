@@ -1,20 +1,21 @@
+import { UnexpectedCodePathError } from 'helpful-errors';
+
 import { getDeclastructSquarespaceProvider } from '../domain.operations/provider/getDeclastructSquarespaceProvider';
 
 /**
- * .what = factory for creating real Squarespace context for integration/acceptance tests
- * .why = enables testing against real Squarespace account
+ * .what = factory to create real Squarespace context for integration/acceptance tests
+ * .why = enables test runs against real Squarespace account
  * .note = requires SQUARESPACE_EMAIL, SQUARESPACE_PASSWORD environment variables
  */
 export const getSampleSquarespaceContext = () => {
-  // validate required environment variables
+  // fail-fast if credentials not provided
   const email = process.env.SQUARESPACE_EMAIL;
   const password = process.env.SQUARESPACE_PASSWORD;
 
-  if (!email || !password) {
-    throw new Error(
-      'getSampleSquarespaceContext requires SQUARESPACE_EMAIL and SQUARESPACE_PASSWORD environment variables',
-    );
-  }
+  if (!email || !password)
+    UnexpectedCodePathError.throw('squarespace credentials required', {
+      hint: 'set SQUARESPACE_EMAIL and SQUARESPACE_PASSWORD environment variables',
+    });
 
   // create provider with credentials from environment
   const provider = getDeclastructSquarespaceProvider({
@@ -27,17 +28,26 @@ export const getSampleSquarespaceContext = () => {
       password,
       totpSecret: process.env.SQUARESPACE_TOTP_SECRET,
     },
+    browser: {
+      // connect to extant browser via wsEndpoint (e.g., BROWSER_WS_ENDPOINT=ws://localhost:9222/...)
+      extantBrowserWSEndpoint: process.env.BROWSER_WS_ENDPOINT,
+    },
+    session: {
+      // persist session to disk (e.g., SESSION_STORAGE_PATH=.cache/squarespace-session.json)
+      storageStatePath: process.env.SESSION_STORAGE_PATH,
+    },
   });
 
   return provider.context;
 };
 
 /**
- * .what = checks if Squarespace credentials are available
- * .why = allows tests to skip gracefully when credentials not provided
+ * .what = asserts Squarespace credentials are available
+ * .why = fail-fast for tests that require real credentials
  */
-export const hasSquarespaceCredentials = (): boolean => {
-  return !!(
-    process.env.SQUARESPACE_EMAIL && process.env.SQUARESPACE_PASSWORD
-  );
+export const requireSquarespaceCredentials = (): void => {
+  if (!process.env.SQUARESPACE_EMAIL || !process.env.SQUARESPACE_PASSWORD)
+    UnexpectedCodePathError.throw('squarespace credentials required', {
+      hint: 'set SQUARESPACE_EMAIL and SQUARESPACE_PASSWORD environment variables',
+    });
 };

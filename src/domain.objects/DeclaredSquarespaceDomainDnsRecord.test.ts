@@ -1,12 +1,16 @@
+import { RefByUnique } from 'domain-objects';
 import { given, then, when } from 'test-fns';
 
 import { DeclaredSquarespaceDomainDnsRecord } from './DeclaredSquarespaceDomainDnsRecord';
+import type { DeclaredSquarespaceDomainRegistration } from './DeclaredSquarespaceDomainRegistration';
 
 describe('DeclaredSquarespaceDomainDnsRecord', () => {
   given('a DNS record declaration', () => {
     when('creating an A record', () => {
       const record = DeclaredSquarespaceDomainDnsRecord.as({
-        domain: { name: 'example.com' },
+        domain: RefByUnique.as<typeof DeclaredSquarespaceDomainRegistration>({
+          name: 'example.com',
+        }),
         type: 'A',
         host: '@',
         value: '192.0.2.1',
@@ -28,7 +32,9 @@ describe('DeclaredSquarespaceDomainDnsRecord', () => {
 
     when('creating an MX record with priority', () => {
       const record = DeclaredSquarespaceDomainDnsRecord.as({
-        domain: { name: 'example.com' },
+        domain: RefByUnique.as<typeof DeclaredSquarespaceDomainRegistration>({
+          name: 'example.com',
+        }),
         type: 'MX',
         host: '@',
         value: 'mail.example.com',
@@ -45,7 +51,9 @@ describe('DeclaredSquarespaceDomainDnsRecord', () => {
 
     when('creating a preset record', () => {
       const record = DeclaredSquarespaceDomainDnsRecord.as({
-        domain: { name: 'example.com' },
+        domain: RefByUnique.as<typeof DeclaredSquarespaceDomainRegistration>({
+          name: 'example.com',
+        }),
         type: 'CNAME',
         host: 'www',
         value: 'ext-sq.squarespace.com',
@@ -74,7 +82,7 @@ describe('DeclaredSquarespaceDomainDnsRecord', () => {
         );
       });
 
-      then('primary key is domain', () => {
+      then('primary key is parent domain reference', () => {
         expect(DeclaredSquarespaceDomainDnsRecord.primary).toEqual(['domain']);
       });
     });

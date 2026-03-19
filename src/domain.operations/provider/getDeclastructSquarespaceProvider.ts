@@ -1,8 +1,8 @@
-import type { ContextSquarespaceAgent } from '../../domain.objects/ContextSquarespaceAgent';
-import { createSquarespaceAgentOptions } from '../../access/sdks/playwright/createSquarespaceAgentOptions';
 import { DeclaredSquarespaceDomainDnsRecordDao } from '../../access/daos/DeclaredSquarespaceDomainDnsRecordDao';
 import { DeclaredSquarespaceDomainRegistrationDao } from '../../access/daos/DeclaredSquarespaceDomainRegistrationDao';
 import { DeclaredSquarespaceDomainTransferRequestDao } from '../../access/daos/DeclaredSquarespaceDomainTransferRequestDao';
+import { getSquarespaceAgentOptions } from '../../access/sdks/squarespace.via.playwright/getSquarespaceAgentOptions';
+import type { ContextSquarespaceAgent } from '../../domain.objects/ContextSquarespaceAgent';
 
 /**
  * .what = factory to create a Declastruct Squarespace provider
@@ -53,13 +53,24 @@ export const getDeclastructSquarespaceProvider = (input: {
    */
   browser?: {
     /**
-     * existing browser WebSocket endpoint to connect to
+     * extant browser WebSocket endpoint to connect to
      */
-    existingBrowserWSEndpoint?: string;
+    extantBrowserWSEndpoint?: string;
+  };
+
+  /**
+   * optional session persistence configuration
+   */
+  session?: {
+    /**
+     * path to persist browser session (cookies, localStorage)
+     * .why - enables session reuse across test runs, reduces login frequency
+     */
+    storageStatePath?: string;
   };
 }) => {
   // create agent options with sensible defaults
-  const agentOptions = createSquarespaceAgentOptions({
+  const agentOptions = getSquarespaceAgentOptions({
     account: input.account,
     credentials: {
       email: input.credentials.email,
@@ -70,6 +81,7 @@ export const getDeclastructSquarespaceProvider = (input: {
     },
     cache: input.cache,
     browser: input.browser,
+    session: input.session,
   });
 
   // create context for DAO operations

@@ -1,5 +1,8 @@
-import type { RawDnsRecord } from '../../access/sdks/playwright/dnsSettings/scrapeDnsRecords';
+import { RefByUnique } from 'domain-objects';
+
+import type { RawDnsRecord } from '../../access/sdks/squarespace.via.playwright/dnsSettings/scrapeDnsRecords';
 import { DeclaredSquarespaceDomainDnsRecord } from '../../domain.objects/DeclaredSquarespaceDomainDnsRecord';
+import type { DeclaredSquarespaceDomainRegistration } from '../../domain.objects/DeclaredSquarespaceDomainRegistration';
 import type { DeclaredSquarespaceDomainDnsRecordType } from '../../domain.objects/literals/DeclaredSquarespaceDomainDnsRecordType';
 
 /**
@@ -20,7 +23,10 @@ export const castIntoDeclaredSquarespaceDomainDnsRecord = (input: {
   const priority = raw.priority ? parseInt(raw.priority, 10) : null;
 
   return new DeclaredSquarespaceDomainDnsRecord({
-    domain: { name: domainName },
+    domain: RefByUnique.as<typeof DeclaredSquarespaceDomainRegistration>({
+      name: domainName,
+    }),
+    // .note = type comes from squarespace scrape; cast valid at boundary
     type: raw.type.toUpperCase() as DeclaredSquarespaceDomainDnsRecordType,
     host: raw.host,
     value: raw.value,

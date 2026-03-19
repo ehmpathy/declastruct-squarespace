@@ -1,0 +1,9 @@
+org: ehmpathy
+
+extends:
+  - .agent/repo=ehmpathy/role=mechanic/keyrack.yml  # inherit mechanic keys (e.g., github token for push)
+
+env.test:
+  - SQUARESPACE_EMAIL
+  - SQUARESPACE_PASSWORD
+  - SQUARESPACE_TOTP_SECRET

@@ -1,6 +1,6 @@
-import { scrapeDomainDetail } from '../../access/sdks/playwright/domainDetail/scrapeDomainDetail';
-import { scrapeDomainsList } from '../../access/sdks/playwright/domainsList/scrapeDomainsList';
-import { withNewLoggedInBrowserPage } from '../../access/sdks/playwright/wrappers/withNewLoggedInBrowserPage';
+import { scrapeDomainDetail } from '../../access/sdks/squarespace.via.playwright/domainDetail/scrapeDomainDetail';
+import { scrapeDomainsList } from '../../access/sdks/squarespace.via.playwright/domainsList/scrapeDomainsList';
+import { withNewLoggedInBrowserPage } from '../../access/sdks/squarespace.via.playwright/wrappers/withNewLoggedInBrowserPage';
 import type { ContextSquarespaceAgentPage } from '../../domain.objects/ContextSquarespaceAgent';
 import type { DeclaredSquarespaceDomainRegistration } from '../../domain.objects/DeclaredSquarespaceDomainRegistration';
 import { withRemoteStateQueryCache } from '../../infra/performance/withRemoteStateCache';

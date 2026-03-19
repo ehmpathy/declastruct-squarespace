@@ -1,12 +1,16 @@
+import { RefByUnique } from 'domain-objects';
 import { given, then, when } from 'test-fns';
 
+import type { DeclaredSquarespaceDomainRegistration } from './DeclaredSquarespaceDomainRegistration';
 import { DeclaredSquarespaceDomainTransferRequest } from './DeclaredSquarespaceDomainTransferRequest';
 
 describe('DeclaredSquarespaceDomainTransferRequest', () => {
   given('a transfer request declaration', () => {
     when('creating a new transfer request', () => {
       const request = DeclaredSquarespaceDomainTransferRequest.as({
-        domain: { name: 'example.com' },
+        domain: RefByUnique.as<typeof DeclaredSquarespaceDomainRegistration>({
+          name: 'example.com',
+        }),
         requestedAt: '2025-01-15T10:30:00.000Z',
         status: 'REQUESTED',
       });
@@ -20,7 +24,9 @@ describe('DeclaredSquarespaceDomainTransferRequest', () => {
 
     when('transfer request has progressed', () => {
       const request = DeclaredSquarespaceDomainTransferRequest.as({
-        domain: { name: 'transferred-domain.com' },
+        domain: RefByUnique.as<typeof DeclaredSquarespaceDomainRegistration>({
+          name: 'transferred-domain.com',
+        }),
         requestedAt: '2025-01-10T08:00:00.000Z',
         status: 'IN_PROGRESS',
       });

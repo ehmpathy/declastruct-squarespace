@@ -1,20 +1,23 @@
-import { scrapeDnsRecords } from '../../access/sdks/playwright/dnsSettings/scrapeDnsRecords';
-import { withNewLoggedInBrowserPage } from '../../access/sdks/playwright/wrappers/withNewLoggedInBrowserPage';
+import type { RefByUnique } from 'domain-objects';
+
+import { scrapeDnsRecords } from '../../access/sdks/squarespace.via.playwright/dnsSettings/scrapeDnsRecords';
+import { withNewLoggedInBrowserPage } from '../../access/sdks/squarespace.via.playwright/wrappers/withNewLoggedInBrowserPage';
 import type { ContextSquarespaceAgentPage } from '../../domain.objects/ContextSquarespaceAgent';
 import type { DeclaredSquarespaceDomainDnsRecord } from '../../domain.objects/DeclaredSquarespaceDomainDnsRecord';
+import type { DeclaredSquarespaceDomainRegistration } from '../../domain.objects/DeclaredSquarespaceDomainRegistration';
 import { withRemoteStateQueryCache } from '../../infra/performance/withRemoteStateCache';
 import { castIntoDeclaredSquarespaceDomainDnsRecord } from './castIntoDeclaredSquarespaceDomainDnsRecord';
 
 /**
  * .what = internal implementation of getAllDnsRecords
- * .why = separates page logic from caching and wrapping concerns
+ * .why = separates page logic from cache and wrapper concerns
  */
 const getAllDnsRecordsFromPage = async (
-  input: { domainName: string },
+  input: { domain: RefByUnique<typeof DeclaredSquarespaceDomainRegistration> },
   context: ContextSquarespaceAgentPage,
 ): Promise<DeclaredSquarespaceDomainDnsRecord[]> => {
   const { page } = context;
-  const { domainName } = input;
+  const domainName = input.domain.name;
 
   // scrape raw dns records
   const rawRecords = await scrapeDnsRecords({

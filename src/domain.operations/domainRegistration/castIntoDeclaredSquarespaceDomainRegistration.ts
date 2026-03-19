@@ -1,6 +1,6 @@
 import { UnexpectedCodePathError } from 'helpful-errors';
 
-import type { RawDomainDetail } from '../../access/sdks/playwright/domainDetail/scrapeDomainDetail';
+import type { RawDomainDetail } from '../../access/sdks/squarespace.via.playwright/domainDetail/scrapeDomainDetail';
 import { DeclaredSquarespaceDomainRegistration } from '../../domain.objects/DeclaredSquarespaceDomainRegistration';
 import type { DeclaredSquarespaceDomainLockReason } from '../../domain.objects/literals/DeclaredSquarespaceDomainLockReason';
 import type { DeclaredSquarespaceDomainRegistrationStatus } from '../../domain.objects/literals/DeclaredSquarespaceDomainRegistrationStatus';

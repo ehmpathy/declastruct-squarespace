@@ -1,6 +1,6 @@
 import { given, then, when } from 'test-fns';
 
-import type { RawTransferRequest } from '../../access/sdks/playwright/transfersList/scrapeTransferRequests';
+import type { RawTransferRequest } from '../../access/sdks/squarespace.via.playwright/transfersList/scrapeTransferRequests';
 import { castIntoDeclaredSquarespaceDomainTransferRequest } from './castIntoDeclaredSquarespaceDomainTransferRequest';
 
 describe('castIntoDeclaredSquarespaceDomainTransferRequest', () => {
@@ -40,6 +40,44 @@ describe('castIntoDeclaredSquarespaceDomainTransferRequest', () => {
         });
 
         expect(result.domain.name).toEqual('cancelled.com');
+        expect(result.status).toEqual('CANCELLED');
+      });
+    });
+
+    when('status indicates rejected', () => {
+      const raw: RawTransferRequest = {
+        domainName: 'rejected.com',
+        status: 'Transfer Rejected',
+        direction: 'out',
+        initiatedDate: '2024-01-10',
+        expiresAt: null,
+      };
+
+      then('it should map to CANCELLED status (terminal state)', () => {
+        const result = castIntoDeclaredSquarespaceDomainTransferRequest({
+          raw,
+        });
+
+        expect(result.domain.name).toEqual('rejected.com');
+        expect(result.status).toEqual('CANCELLED');
+      });
+    });
+
+    when('status indicates expired', () => {
+      const raw: RawTransferRequest = {
+        domainName: 'expired.com',
+        status: 'Code Expired',
+        direction: 'out',
+        initiatedDate: '2024-01-01',
+        expiresAt: null,
+      };
+
+      then('it should map to CANCELLED status (terminal state)', () => {
+        const result = castIntoDeclaredSquarespaceDomainTransferRequest({
+          raw,
+        });
+
+        expect(result.domain.name).toEqual('expired.com');
         expect(result.status).toEqual('CANCELLED');
       });
     });

@@ -4,8 +4,8 @@ import { existsSync, mkdirSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { given, then, useBeforeAll, when } from 'test-fns';
 
-import { getDeclastructSquarespaceProvider } from './index';
 import { getAllDomains } from '../../domain.operations/domainRegistration/getAllDomains';
+import { getDeclastructSquarespaceProvider } from './index';
 
 /**
  * .what = acceptance tests for declastruct CLI workflow with Squarespace
@@ -58,6 +58,14 @@ describe('declastruct CLI workflow', () => {
         expect(existsSync(planFile)).toBe(true);
         expect(prep.plan).toHaveProperty('changes');
         expect(Array.isArray(prep.plan.changes)).toBe(true);
+      });
+
+      then('fetches real domains from live account', () => {
+        /**
+         * .what = validates real domains were scraped from live Squarespace account
+         * .why = proves acceptance test uses real data, not empty stubs
+         */
+        expect(prep.plan.changes.length).toBeGreaterThan(0);
       });
 
       then('plan includes domain registration resources', () => {
@@ -190,16 +198,13 @@ describe('declastruct CLI workflow', () => {
     when('verifying caching behavior', () => {
       then('second getAllDomains call uses cache', async () => {
         /**
-         * .what = validates remote state caching is working
+         * .what = validates remote state cache is active
          * .why = ensures performance optimization for 300+ domain accounts
          */
-        // skip if credentials not provided
+        // .note = credentials validated by acceptance test suite via resources.acceptance.ts
         const email = process.env.SQUARESPACE_EMAIL;
         const password = process.env.SQUARESPACE_PASSWORD;
-        if (!email || !password) {
-          console.log('skipping cache test - credentials not provided');
-          return;
-        }
+        if (!email || !password) throw new Error('credentials required');
 
         // create provider
         const provider = getDeclastructSquarespaceProvider({

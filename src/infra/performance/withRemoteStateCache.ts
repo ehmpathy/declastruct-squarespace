@@ -1,5 +1,5 @@
-import { createHash } from 'crypto';
 import { deserialize, serialize } from 'domain-objects';
+import { asHashSha256 } from 'hash-fns';
 import type { SimpleOnDiskCache } from 'simple-on-disk-cache';
 import { createRemoteStateCacheContext } from 'with-remote-state-cache';
 
@@ -7,14 +7,6 @@ import type { ContextSquarespaceAgent } from '@src/domain.objects/ContextSquares
 import { DeclaredSquarespaceDomainDnsRecord } from '@src/domain.objects/DeclaredSquarespaceDomainDnsRecord';
 import { DeclaredSquarespaceDomainRegistration } from '@src/domain.objects/DeclaredSquarespaceDomainRegistration';
 import { DeclaredSquarespaceDomainTransferRequest } from '@src/domain.objects/DeclaredSquarespaceDomainTransferRequest';
-
-/**
- * .what - Helper to create a sha256 hash
- * .why - Used for cache key uniqueness
- */
-const toHashSha256Sync = (input: string): string => {
-  return createHash('sha256').update(input).digest('hex').slice(0, 16);
-};
 
 /**
  * .what - Remote state caching context for Squarespace domain operations
@@ -47,7 +39,7 @@ export const {
           .replace(/_$/, ''),
 
         // Unique hash suffix
-        toHashSha256Sync(JSON.stringify(forInput[0])),
+        asHashSha256(JSON.stringify(forInput[0])),
 
         // Serialization version (bump on schema changes)
         'v1',

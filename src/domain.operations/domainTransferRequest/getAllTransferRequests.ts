@@ -1,5 +1,5 @@
-import { scrapeTransferRequests } from '../../access/sdks/playwright/transfersList/scrapeTransferRequests';
-import { withNewLoggedInBrowserPage } from '../../access/sdks/playwright/wrappers/withNewLoggedInBrowserPage';
+import { scrapeTransferRequests } from '../../access/sdks/squarespace.via.playwright/transfersList/scrapeTransferRequests';
+import { withNewLoggedInBrowserPage } from '../../access/sdks/squarespace.via.playwright/wrappers/withNewLoggedInBrowserPage';
 import type { ContextSquarespaceAgentPage } from '../../domain.objects/ContextSquarespaceAgent';
 import type { DeclaredSquarespaceDomainTransferRequest } from '../../domain.objects/DeclaredSquarespaceDomainTransferRequest';
 import { withRemoteStateQueryCache } from '../../infra/performance/withRemoteStateCache';

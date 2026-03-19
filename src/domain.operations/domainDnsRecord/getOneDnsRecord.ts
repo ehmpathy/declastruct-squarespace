@@ -25,7 +25,10 @@ export const getOneDnsRecord = async (
   const domainName = input.by.unique.domain.name;
 
   // fetch all DNS records for this domain (cached)
-  const dnsRecords = await getAllDnsRecords({ domainName }, context);
+  const dnsRecords = await getAllDnsRecords(
+    { domain: input.by.unique.domain },
+    context,
+  );
 
   // filter to find the requested record
   const recordFound = dnsRecords.find(

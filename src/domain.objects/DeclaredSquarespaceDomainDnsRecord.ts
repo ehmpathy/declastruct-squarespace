@@ -48,6 +48,7 @@ export interface DeclaredSquarespaceDomainDnsRecord {
 }
 
 export class DeclaredSquarespaceDomainDnsRecord extends DomainEntity<DeclaredSquarespaceDomainDnsRecord> {
+  // .note = primary is parent reference; unique key ['domain', 'type', 'host'] handles identity
   public static primary = ['domain'] as const;
   public static unique = ['domain', 'type', 'host'] as const;
   public static metadata = [] as const;

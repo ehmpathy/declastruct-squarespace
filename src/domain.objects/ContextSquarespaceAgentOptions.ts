@@ -1,7 +1,9 @@
 import type Bottleneck from 'bottleneck';
-import type { Browser, BrowserContext, Page } from 'playwright';
+import type { Page } from 'playwright';
 import type { SimpleInMemoryCache } from 'simple-in-memory-cache';
 import type { SimpleOnDiskCache } from 'simple-on-disk-cache';
+
+import type { BrowserAuthSession } from './BrowserAuthSession';
 
 /**
  * .what - Complete agent options for Squarespace Playwright automation
@@ -42,14 +44,10 @@ export interface ContextSquarespaceAgentOptions {
    */
   browser: {
     /**
-     * Cache for reusing logged-in browser instances
-     * .why - Avoids repeated login overhead
+     * Cache for browser auth session with respawn capability
+     * .why - avoids repeated login overhead; supports mode switch for captcha
      */
-    cache: SimpleInMemoryCache<{
-      browser: Browser;
-      context: BrowserContext;
-      close: () => Promise<void>;
-    }>;
+    cache: SimpleInMemoryCache<BrowserAuthSession>;
 
     /**
      * Rate limiter for browser operations
@@ -61,7 +59,7 @@ export interface ContextSquarespaceAgentOptions {
      * Optional existing browser WebSocket endpoint
      * .why - Allows connecting to externally managed browser
      */
-    existingBrowserWSEndpoint?: string;
+    extantBrowserWSEndpoint?: string;
   };
 
   /**
@@ -84,5 +82,53 @@ export interface ContextSquarespaceAgentOptions {
      * .why - Survives process restarts, enables fast repeated queries
      */
     cache: SimpleOnDiskCache;
+  };
+
+  /**
+   * Session persistence configuration
+   */
+  session?: {
+    /**
+     * Path to persist browser session (cookies, localStorage)
+     * .why - Enables session reuse across test runs, reduces login frequency
+     * .format - JSON file compatible with playwright storageState
+     */
+    storageStatePath?: string;
+  };
+
+  /**
+   * Captcha handle configuration
+   */
+  captcha?: {
+    /**
+     * Enable headful checkbox click (tier 2)
+     * .default - true
+     */
+    checkboxClickEnabled?: boolean;
+
+    /**
+     * Timeout for checkbox validation in ms
+     * .default - 5000
+     */
+    checkboxTimeoutMs?: number;
+
+    /**
+     * Enable human fallback for puzzle challenges (tier 3)
+     * .default - true
+     */
+    humanFallbackEnabled?: boolean;
+
+    /**
+     * How to signal human to solve captcha
+     * - 'stdin': prompt in terminal, wait for ENTER
+     * - 'file': watch for file creation at signalFilePath
+     * .default - 'stdin'
+     */
+    humanSignalMode?: 'stdin' | 'file';
+
+    /**
+     * Path for file-based human signal
+     */
+    humanSignalFilePath?: string;
   };
 }

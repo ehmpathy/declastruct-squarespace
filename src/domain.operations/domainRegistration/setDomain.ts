@@ -1,10 +1,10 @@
 import { BadRequestError, UnexpectedCodePathError } from 'helpful-errors';
 import type { PickOne } from 'type-fns';
 
-import { scrapeDomainDetail } from '../../access/sdks/playwright/domainDetail/scrapeDomainDetail';
-import { toggleDnssec } from '../../access/sdks/playwright/domainDetail/toggleDnssec';
-import { toggleDomainLock } from '../../access/sdks/playwright/domainDetail/toggleDomainLock';
-import { withNewLoggedInBrowserPage } from '../../access/sdks/playwright/wrappers/withNewLoggedInBrowserPage';
+import { scrapeDomainDetail } from '../../access/sdks/squarespace.via.playwright/domainDetail/scrapeDomainDetail';
+import { toggleDnssec } from '../../access/sdks/squarespace.via.playwright/domainDetail/toggleDnssec';
+import { toggleDomainLock } from '../../access/sdks/squarespace.via.playwright/domainDetail/toggleDomainLock';
+import { withNewLoggedInBrowserPage } from '../../access/sdks/squarespace.via.playwright/wrappers/withNewLoggedInBrowserPage';
 import type { ContextSquarespaceAgentPage } from '../../domain.objects/ContextSquarespaceAgent';
 import type { DeclaredSquarespaceDomainRegistration } from '../../domain.objects/DeclaredSquarespaceDomainRegistration';
 import { withRemoteStateMutationRegistration } from '../../infra/performance/withRemoteStateCache';
@@ -74,6 +74,18 @@ const setDomainWithPage = async (
     domainDesired.isLocked !== undefined &&
     domainDesired.isLocked !== domainFound.isLocked
   ) {
+    // pre-check: fail fast if domain has a lock restriction that prevents unlock
+    if (domainDesired.isLocked === false && domainFound.lockReason) {
+      throw new BadRequestError(
+        'domain cannot be unlocked due to lock restriction',
+        {
+          domain: domainDesired.name,
+          lockReason: domainFound.lockReason,
+          hint: 'wait for lock period to expire before transfer',
+        },
+      );
+    }
+
     const lockResult = await toggleDomainLock({
       page,
       domain: domainDesired.name,

@@ -1,4 +1,7 @@
-import type { RawTransferRequest } from '../../access/sdks/playwright/transfersList/scrapeTransferRequests';
+import { RefByUnique } from 'domain-objects';
+
+import type { RawTransferRequest } from '../../access/sdks/squarespace.via.playwright/transfersList/scrapeTransferRequests';
+import type { DeclaredSquarespaceDomainRegistration } from '../../domain.objects/DeclaredSquarespaceDomainRegistration';
 import { DeclaredSquarespaceDomainTransferRequest } from '../../domain.objects/DeclaredSquarespaceDomainTransferRequest';
 import type { DeclaredSquarespaceTransferRequestStatus } from '../../domain.objects/literals/DeclaredSquarespaceTransferRequestStatus';
 
@@ -17,8 +20,13 @@ const mapRawStatusToTransferStatus = (input: {
   if (status.includes('complete') || status.includes('transferred'))
     return 'COMPLETED';
 
-  // handle cancelled state
-  if (status.includes('cancel') || status.includes('failed'))
+  // handle terminal states that allow re-request (cancelled, failed, rejected, expired)
+  if (
+    status.includes('cancel') ||
+    status.includes('failed') ||
+    status.includes('reject') ||
+    status.includes('expir')
+  )
     return 'CANCELLED';
 
   // handle in-progress state
@@ -55,7 +63,9 @@ export const castIntoDeclaredSquarespaceDomainTransferRequest = (input: {
   });
 
   return new DeclaredSquarespaceDomainTransferRequest({
-    domain: { name: raw.domainName },
+    domain: RefByUnique.as<typeof DeclaredSquarespaceDomainRegistration>({
+      name: raw.domainName,
+    }),
     requestedAt,
     status,
   });

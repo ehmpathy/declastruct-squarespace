@@ -49,21 +49,12 @@ describe('getDeclastructSquarespaceProvider', () => {
           provider.daos.DeclaredSquarespaceDomainRegistration.set.upsert,
         ).toBeInstanceOf(Function);
 
-        // dns record DAO
+        // dns record DAO (get only - set operations removed per wish scope)
         expect(
           provider.daos.DeclaredSquarespaceDomainDnsRecord.get.one.byUnique,
         ).toBeInstanceOf(Function);
         expect(
           provider.daos.DeclaredSquarespaceDomainDnsRecord.get.all,
-        ).toBeInstanceOf(Function);
-        expect(
-          provider.daos.DeclaredSquarespaceDomainDnsRecord.set.findsert,
-        ).toBeInstanceOf(Function);
-        expect(
-          provider.daos.DeclaredSquarespaceDomainDnsRecord.set.upsert,
-        ).toBeInstanceOf(Function);
-        expect(
-          provider.daos.DeclaredSquarespaceDomainDnsRecord.set.delete,
         ).toBeInstanceOf(Function);
 
         // transfer request DAO
@@ -117,7 +108,7 @@ describe('getDeclastructSquarespaceProvider', () => {
         password: 'test-password',
       },
       cache: {
-        directory: '/custom/cache/dir',
+        directory: '.cache/test-custom',
       },
     };
 

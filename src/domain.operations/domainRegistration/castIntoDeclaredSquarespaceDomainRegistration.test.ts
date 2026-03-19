@@ -1,6 +1,6 @@
 import { given, then, when } from 'test-fns';
 
-import type { RawDomainDetail } from '../../access/sdks/playwright/domainDetail/scrapeDomainDetail';
+import type { RawDomainDetail } from '../../access/sdks/squarespace.via.playwright/domainDetail/scrapeDomainDetail';
 import { DeclaredSquarespaceDomainRegistration } from '../../domain.objects/DeclaredSquarespaceDomainRegistration';
 import { castIntoDeclaredSquarespaceDomainRegistration } from './castIntoDeclaredSquarespaceDomainRegistration';
 
