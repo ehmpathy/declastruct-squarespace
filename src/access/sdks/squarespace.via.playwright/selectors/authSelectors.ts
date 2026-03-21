@@ -13,7 +13,10 @@ export const authSelectors = {
 
   // 2FA/TOTP page
   totpPage: {
-    codeInput: 'input[name="code"]',
+    codeInput:
+      'input[name="code"], input[placeholder*="Authentication"], input[autocomplete="one-time-code"], input[inputmode="numeric"]',
+    rememberDevice:
+      'input[type="checkbox"], label:has-text("Remember"), [data-test="remember-device"]',
     submitButton: 'button[type="submit"]',
     errorMessage: '[data-test="totp-error"]',
   },

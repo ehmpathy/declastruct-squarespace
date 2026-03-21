@@ -126,9 +126,15 @@ for KEY in "${REQUIRED_KEYS[@]}"; do
   # check if key is already configured in ehmpath keyrack (test env only)
   EHMPATH_GET_EXIT=0
   if [[ "$ENV" == "test" ]]; then
-    npx rhx keyrack get \
+    # unlock ehmpath keyrack first (requires prikey)
+    npx rhx keyrack unlock \
       --owner ehmpath \
       --prikey "$EHMPATH_KEY" \
+      --key "$KEY" \
+      --env "$ENV" </dev/null >/dev/null 2>&1 || true
+
+    npx rhx keyrack get \
+      --owner ehmpath \
       --key "$KEY" \
       --env "$ENV" </dev/null >/dev/null 2>&1 || EHMPATH_GET_EXIT=$?
   fi
@@ -188,25 +194,35 @@ for KEY in "${REQUIRED_KEYS[@]}"; do
         --env "$ENV" </dev/null >/dev/null 2>&1 || true
     fi
 
-    # verify keys can be fetched back (fail-fast)
+    # verify keys can be fetched back (fail-fast, fail-loud)
+    VERIFY_OUTPUT=""
     VERIFY_EXIT=0
-    npx rhx keyrack get \
+    VERIFY_OUTPUT=$(npx rhx keyrack get \
       --key "$KEY" \
-      --env "$ENV" </dev/null >/dev/null 2>&1 || VERIFY_EXIT=$?
+      --env "$ENV" </dev/null 2>&1) || VERIFY_EXIT=$?
     if [[ $VERIFY_EXIT -ne 0 ]]; then
       echo "   key $KEY: FAILED to verify in your keyrack (exit $VERIFY_EXIT)" >&2
+      echo "$VERIFY_OUTPUT" >&2
       exit 1
     fi
 
     if [[ "$ENV" == "test" ]]; then
-      VERIFY_EXIT=0
-      npx rhx keyrack get \
+      # unlock ehmpath keyrack first (requires prikey)
+      npx rhx keyrack unlock \
         --owner ehmpath \
         --prikey "$EHMPATH_KEY" \
         --key "$KEY" \
-        --env "$ENV" </dev/null >/dev/null 2>&1 || VERIFY_EXIT=$?
+        --env "$ENV" </dev/null >/dev/null 2>&1 || true
+
+      VERIFY_OUTPUT=""
+      VERIFY_EXIT=0
+      VERIFY_OUTPUT=$(npx rhx keyrack get \
+        --owner ehmpath \
+        --key "$KEY" \
+        --env "$ENV" </dev/null 2>&1) || VERIFY_EXIT=$?
       if [[ $VERIFY_EXIT -ne 0 ]]; then
         echo "   key $KEY: FAILED to verify in ehmpath keyrack (exit $VERIFY_EXIT)" >&2
+        echo "$VERIFY_OUTPUT" >&2
         exit 1
       fi
     fi

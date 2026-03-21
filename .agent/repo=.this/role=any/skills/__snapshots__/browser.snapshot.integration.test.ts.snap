@@ -1,0 +1,90 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`browser.snapshot given: [case1] --tab 0 captures all assets when: [t0] skill is invoked then: it captures all assets: stderr 1`] = `""`;
+
+exports[`browser.snapshot given: [case1] --tab 0 captures all assets when: [t0] skill is invoked then: it captures all assets: stdout 1`] = `
+"
+🪨 run solid skill repo=.this/role=any/skill=browser.snapshot
+
+🐢 sweet
+
+🐚 browser.snapshot
+   ├─ session: snapshot-case1
+   ├─ tab: 0
+   │
+   ├─ ✓ snapshot.meta.json
+   ├─ ✓ snapshot.png
+   ├─ ⚠ snapshot.html (content unavailable)
+   ├─ ✓ snapshot.console.json
+   ├─ ✓ snapshot.storage.json
+   ├─ ✓ snapshot.network.json
+   │
+   ├─ output
+   │  ├─ .cache/browser.snapshot-case1/snapshot.ISOTIME.tabN/snapshot.console.json
+   │  ├─ .cache/browser.snapshot-case1/snapshot.ISOTIME.tabN/snapshot.html
+   │  ├─ .cache/browser.snapshot-case1/snapshot.ISOTIME.tabN/snapshot.meta.json
+   │  ├─ .cache/browser.snapshot-case1/snapshot.ISOTIME.tabN/snapshot.network.json
+   │  ├─ .cache/browser.snapshot-case1/snapshot.ISOTIME.tabN/snapshot.png
+   │  └─ .cache/browser.snapshot-case1/snapshot.ISOTIME.tabN/snapshot.storage.json
+   │
+   └─ done
+"
+`;
+
+exports[`browser.snapshot given: [case2] without --tab when: [t0] skill is invoked without --tab then: it fails with usage message: stderr 1`] = `
+"
+🪨 run solid skill repo=.this/role=any/skill=browser.snapshot
+   └─ 💥 failed with an error
+
+error: --tab required
+
+usage:
+  rhx browser.snapshot --tab 0              # all assets
+  rhx browser.snapshot screenshot --tab 0   # just screenshot
+  rhx browser.snapshot html --tab 0         # just html
+"
+`;
+
+exports[`browser.snapshot given: [case2] without --tab when: [t0] skill is invoked without --tab then: it fails with usage message: stdout 1`] = `
+"
+🪨 run solid skill repo=.this/role=any/skill=browser.snapshot
+
+"
+`;
+
+exports[`browser.snapshot given: [case3] tab out of range when: [t0] skill is invoked with --tab 99 then: it fails with tab not found message: stderr 1`] = `
+"
+🪨 run solid skill repo=.this/role=any/skill=browser.snapshot
+   └─ 💥 failed with an error
+
+error: tab 99 not found
+
+available tabs: 0-0
+"
+`;
+
+exports[`browser.snapshot given: [case3] tab out of range when: [t0] skill is invoked with --tab 99 then: it fails with tab not found message: stdout 1`] = `
+"
+🪨 run solid skill repo=.this/role=any/skill=browser.snapshot
+
+"
+`;
+
+exports[`browser.snapshot given: [case4] no browser active when: [t0] skill is invoked without browser then: it fails with no browser found message: stderr 1`] = `
+"
+🪨 run solid skill repo=.this/role=any/skill=browser.snapshot
+   └─ 💥 failed with an error
+
+error: no browser found
+
+start a browser first:
+  rhx browser.start --mode HEADFUL
+"
+`;
+
+exports[`browser.snapshot given: [case4] no browser active when: [t0] skill is invoked without browser then: it fails with no browser found message: stdout 1`] = `
+"
+🪨 run solid skill repo=.this/role=any/skill=browser.snapshot
+
+"
+`;

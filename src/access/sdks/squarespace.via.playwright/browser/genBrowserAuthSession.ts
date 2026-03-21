@@ -14,21 +14,40 @@ import { performSquarespaceLogin } from '../auth/performSquarespaceLogin';
 import { stealthChromium as chromium } from './stealthChromium';
 
 /**
- * .what - launch browser in specified mode with stealth plugin
+ * .what - launch or connect to browser with stealth plugin
  * .why - centralized browser launch logic for initial spawn and respawn
  */
 const launchBrowser = async (input: {
   mode: BrowserMode;
   wsEndpoint: string | undefined;
-}): Promise<Browser> => {
+}): Promise<{ browser: Browser; extantContext: BrowserContext | null }> => {
   const { mode, wsEndpoint } = input;
   const headless = mode === 'HEADLESS';
 
   // connect to extant browser if endpoint provided
-  if (wsEndpoint) return chromium.connectOverCDP(wsEndpoint);
+  // .note - use connectOverCDP() for CDP endpoints (skill uses launch() with --remote-debug-port)
+  if (wsEndpoint) {
+    console.log(
+      'genBrowserAuthSession: connect to extant browser at',
+      wsEndpoint,
+    );
+    const browser = await chromium.connectOverCDP(wsEndpoint);
+
+    // get extant context from skill-opened browser (reuse same window)
+    const contexts = browser.contexts();
+    const extantContext: BrowserContext | null =
+      contexts.length > 0 ? (contexts[0] as BrowserContext) : null;
+    if (extantContext) {
+      console.log('genBrowserAuthSession: reuse extant context (same window)');
+    }
+
+    return { browser, extantContext };
+  }
 
   // launch new browser in requested mode
-  return chromium.launch({ headless });
+  console.log('genBrowserAuthSession: launch new browser in', mode, 'mode');
+  const browser = await chromium.launch({ headless });
+  return { browser, extantContext: null };
 };
 
 /**
@@ -87,17 +106,31 @@ const createBrowserAuthSession = async (
 ): Promise<BrowserAuthSession> => {
   const storageStatePath = agentOptions.session?.storageStatePath;
   const wsEndpoint = agentOptions.browser.extantBrowserWSEndpoint;
-  const initialMode: BrowserMode = 'HEADLESS';
+
+  // track if connected to skill-started browser (respawn mode-switch restricted)
+  const connectedToExtantBrowser = !!wsEndpoint;
+
+  // default to HEADFUL for development; set BROWSER_HEADLESS=true for headless
+  const initialMode: BrowserMode =
+    process.env.BROWSER_HEADLESS === 'true' ? 'HEADLESS' : 'HEADFUL';
 
   // read storageState from disk if extant
   const storageStateInitial = readStorageState({ path: storageStatePath });
 
-  // launch browser and create context
-  let browser = await launchBrowser({ mode: initialMode, wsEndpoint });
-  let context = await createBrowserContext({
-    browser,
-    storageState: storageStateInitial,
+  // launch browser (may return extant context if connected to CDP browser)
+  const { browser: launchedBrowser, extantContext } = await launchBrowser({
+    mode: initialMode,
+    wsEndpoint,
   });
+  let browser = launchedBrowser;
+
+  // reuse extant context from skill-opened browser, or create new one
+  let context =
+    extantContext ??
+    (await createBrowserContext({
+      browser,
+      storageState: storageStateInitial,
+    }));
   let mode: BrowserMode = initialMode;
 
   // check session health and login if needed
@@ -147,6 +180,15 @@ const createBrowserAuthSession = async (
     respawn: async (input: { mode: BrowserMode }) => {
       const targetMode = input.mode;
 
+      // refuse mode change when connected to skill-started browser
+      // .why - skill browser is persistent; respawn would orphan it and spawn new browser
+      if (connectedToExtantBrowser && targetMode !== mode) {
+        throw new Error(
+          `respawn mode change refused: connected to skill-started browser in ${mode} mode. ` +
+            `use 'rhx browser.start --mode ${targetMode} --refresh' to restart browser in ${targetMode} mode.`,
+        );
+      }
+
       // save current session before close
       await handle.storage.set();
 
@@ -156,10 +198,11 @@ const createBrowserAuthSession = async (
 
       // launch new browser in target mode
       // .note - wsEndpoint not used for respawn; we need fresh browser with new mode
-      browser = await launchBrowser({
+      const { browser: newBrowser } = await launchBrowser({
         mode: targetMode,
         wsEndpoint: undefined,
       });
+      browser = newBrowser;
 
       // restore session into new context
       const storageState = readStorageState({ path: storageStatePath });

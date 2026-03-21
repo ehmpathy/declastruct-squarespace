@@ -1,6 +1,28 @@
+import { existsSync, readFileSync } from 'fs';
+import { join } from 'path';
+
 import { UnexpectedCodePathError } from 'helpful-errors';
 
 import { getDeclastructSquarespaceProvider } from '../domain.operations/provider/getDeclastructSquarespaceProvider';
+
+/**
+ * .what - get browser wsEndpoint from env or state file
+ * .why - auto-discover persistent browser started via browser.start skill
+ */
+const getBrowserWsEndpoint = (): string | undefined => {
+  // check env var first
+  if (process.env.BROWSER_WS_ENDPOINT) return process.env.BROWSER_WS_ENDPOINT;
+
+  // check state file
+  const wsEndpointFile = join(process.cwd(), '.cache/browser-ws-endpoint');
+  if (existsSync(wsEndpointFile)) {
+    const wsEndpoint = readFileSync(wsEndpointFile, 'utf-8').trim();
+    console.log('auto-discovered browser at:', wsEndpoint);
+    return wsEndpoint;
+  }
+
+  return undefined;
+};
 
 /**
  * .what = factory to create real Squarespace context for integration/acceptance tests
@@ -29,8 +51,8 @@ export const getSampleSquarespaceContext = () => {
       totpSecret: process.env.SQUARESPACE_TOTP_SECRET,
     },
     browser: {
-      // connect to extant browser via wsEndpoint (e.g., BROWSER_WS_ENDPOINT=ws://localhost:9222/...)
-      extantBrowserWSEndpoint: process.env.BROWSER_WS_ENDPOINT,
+      // connect to extant browser via wsEndpoint (auto-discovered from state file or env var)
+      extantBrowserWSEndpoint: getBrowserWsEndpoint(),
     },
     session: {
       // persist session to disk (e.g., SESSION_STORAGE_PATH=.cache/squarespace-session.json)

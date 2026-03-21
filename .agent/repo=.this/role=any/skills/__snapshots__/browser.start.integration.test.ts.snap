@@ -1,0 +1,79 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`browser.start given: [case1] --mode HEADLESS when: [t0] skill is invoked then: it starts browser and writes wsEndpoint file: stderr 1`] = `""`;
+
+exports[`browser.start given: [case1] --mode HEADLESS when: [t0] skill is invoked then: it starts browser and writes wsEndpoint file: stdout 1`] = `
+"
+🪨 run solid skill repo=.this/role=any/skill=browser.start
+
+🐢 surfs up
+
+🐚 browser.start
+   ├─ session: start-case1
+   ├─ mode: HEADLESS
+   ├─ port: PORT
+   ├─ wsEndpoint: ws://localhost:PORT/devtools/browser/UUID
+   ├─ state: .cache/browser.start-case1/ws-endpoint
+   │
+   ├─ tests will auto-discover and reuse this window
+   │
+   └─ to stop: rhx browser.stop --session start-case1
+"
+`;
+
+exports[`browser.start given: [case2] without --mode when: [t0] skill is invoked without --mode then: it fails with usage message: stderr 1`] = `
+"
+🪨 run solid skill repo=.this/role=any/skill=browser.start
+   └─ 💥 failed with an error
+
+error: --mode required (HEADFUL or HEADLESS)
+
+usage:
+  rhx browser.start --mode HEADFUL
+  rhx browser.start --mode HEADLESS
+"
+`;
+
+exports[`browser.start given: [case2] without --mode when: [t0] skill is invoked without --mode then: it fails with usage message: stdout 1`] = `
+"
+🪨 run solid skill repo=.this/role=any/skill=browser.start
+
+"
+`;
+
+exports[`browser.start given: [case3] with invalid --mode when: [t0] skill is invoked with invalid mode then: it fails with error message: stderr 1`] = `
+"
+🪨 run solid skill repo=.this/role=any/skill=browser.start
+   └─ 💥 failed with an error
+
+error: --mode must be HEADFUL or HEADLESS, got: INVALID
+"
+`;
+
+exports[`browser.start given: [case3] with invalid --mode when: [t0] skill is invoked with invalid mode then: it fails with error message: stdout 1`] = `
+"
+🪨 run solid skill repo=.this/role=any/skill=browser.start
+
+"
+`;
+
+exports[`browser.start given: [case4] --refresh kills extant browser when: [t0] browser is started then refreshed then: new browser replaces old one: --refresh stderr 1`] = `""`;
+
+exports[`browser.start given: [case4] --refresh kills extant browser when: [t0] browser is started then refreshed then: new browser replaces old one: --refresh stdout 1`] = `
+"
+🪨 run solid skill repo=.this/role=any/skill=browser.start
+
+🐢 surfs up
+
+🐚 browser.start
+   ├─ session: start-case4
+   ├─ mode: HEADLESS
+   ├─ port: PORT
+   ├─ wsEndpoint: ws://localhost:PORT/devtools/browser/UUID
+   ├─ state: .cache/browser.start-case4/ws-endpoint
+   │
+   ├─ tests will auto-discover and reuse this window
+   │
+   └─ to stop: rhx browser.stop --session start-case4
+"
+`;

@@ -1,3 +1,4 @@
+import { execSync } from 'child_process';
 import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import util from 'util';
@@ -16,20 +17,35 @@ if (!existsSync(join(process.cwd(), 'package.json')))
   throw new Error('no package.json found in cwd. are you @gitroot?');
 
 /**
- * sanity check that AWS credentials are available for integration tests
- *
- * usecases
- * - prevent silent test failures due to missing credentials
- * - provide clear instructions on how to set up credentials
- *
- * supports
- * - AWS_PROFILE: local dev via ~/.aws/config profiles
- * - AWS_ACCESS_KEY_ID: CI/CD via OIDC or IAM credentials
+ * .what = fetch squarespace credentials from keyrack
+ * .why = tests require real credentials; keyrack provides secure access
  */
-if (!(process.env.AWS_PROFILE || process.env.AWS_ACCESS_KEY_ID))
-  throw new Error(
-    'AWS credentials not set. Run w/ creds via `source .agent/repo=.this/skills/use.demo.awsprofile.sh && npm run test:integration`',
-  );
+const fetchKeyFromKeyrack = (key: string): string | null => {
+  try {
+    const result = execSync(
+      `npx rhx keyrack get --owner ehmpath --key ${key} --env test --json`,
+      { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] },
+    );
+    const parsed = JSON.parse(result);
+    return parsed.value ?? null;
+  } catch {
+    return null;
+  }
+};
+
+// fetch squarespace credentials from keyrack (if not already in env)
+if (!process.env.SQUARESPACE_EMAIL) {
+  const email = fetchKeyFromKeyrack('SQUARESPACE_EMAIL');
+  if (email) process.env.SQUARESPACE_EMAIL = email;
+}
+if (!process.env.SQUARESPACE_PASSWORD) {
+  const password = fetchKeyFromKeyrack('SQUARESPACE_PASSWORD');
+  if (password) process.env.SQUARESPACE_PASSWORD = password;
+}
+if (!process.env.SQUARESPACE_TOTP_SECRET) {
+  const totpSecret = fetchKeyFromKeyrack('SQUARESPACE_TOTP_SECRET');
+  if (totpSecret) process.env.SQUARESPACE_TOTP_SECRET = totpSecret;
+}
 
 /**
  * .what = verify that the env has sufficient auth to run the tests if aws is used; otherwise, fail fast

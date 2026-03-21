@@ -158,6 +158,9 @@ jobs:
           role-to-assume: ${{ inputs.creds-aws-role-arn }}
           aws-region: ${{ inputs.creds-aws-region }}
 
+      - name: install playwright browsers
+        run: pnpm exec playwright install chromium --with-deps
+
       - name: start:testdb
         run: npm run start:testdb --if-present
 
@@ -165,7 +168,7 @@ jobs:
         run: npm run start:livedb:dev --if-present
 
       - name: test:integration
-        run: THOROUGH=true npm run test:integration
+        run: BROWSER_HEADLESS=true THOROUGH=true npm run test:integration
 
   test-acceptance-locally:
     runs-on: ubuntu-24.04
@@ -192,6 +195,9 @@ jobs:
           role-to-assume: ${{ inputs.creds-aws-role-arn }}
           aws-region: ${{ inputs.creds-aws-region }}
 
+      - name: install playwright browsers
+        run: pnpm exec playwright install chromium --with-deps
+
       - name: start:testdb
         run: npm run start:testdb --if-present
 
@@ -199,4 +205,4 @@ jobs:
         run: npm run start:livedb:dev --if-present
 
       - name: test:acceptance:locally
-        run: THOROUGH=true npm run test:acceptance --if-present
+        run: BROWSER_HEADLESS=true THOROUGH=true npm run test:acceptance --if-present

@@ -1,0 +1,35 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`browser.snapshot.storage given: [case1] with active browser when: [t0] skill is invoked then: it captures storage state: stderr 1`] = `""`;
+
+exports[`browser.snapshot.storage given: [case1] with active browser when: [t0] skill is invoked then: it captures storage state: stdout 1`] = `
+"
+🪨 run solid skill repo=.this/role=any/skill=browser.snapshot.storage
+
+🐢 cool
+
+🐚 browser.snapshot storage
+   └─ .cache/browser.snapshot-storage-case1/snapshot.ISOTIME.tabN/snapshot.storage.json
+"
+`;
+
+exports[`browser.snapshot.storage given: [case2] without --tab when: [t0] skill is invoked without --tab then: it fails with usage message: stderr 1`] = `
+"
+🪨 run solid skill repo=.this/role=any/skill=browser.snapshot.storage
+   └─ 💥 failed with an error
+
+error: --tab required
+
+usage:
+  rhx browser.snapshot --tab 0              # all assets
+  rhx browser.snapshot screenshot --tab 0   # just screenshot
+  rhx browser.snapshot html --tab 0         # just html
+"
+`;
+
+exports[`browser.snapshot.storage given: [case2] without --tab when: [t0] skill is invoked without --tab then: it fails with usage message: stdout 1`] = `
+"
+🪨 run solid skill repo=.this/role=any/skill=browser.snapshot.storage
+
+"
+`;
