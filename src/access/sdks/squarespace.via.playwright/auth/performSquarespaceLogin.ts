@@ -24,29 +24,57 @@ export const performSquarespaceLogin = async (
 
   // submit login form
   await page.click(authSelectors.loginPage.submitButton);
-  await page.waitForLoadState('networkidle');
 
-  // check for unsupported 2FA methods first (per blackbox criteria usecase.7)
-  const sms2faContainer = await page.$(authSelectors.sms2faPage.container);
-  if (sms2faContainer) {
+  // wait for either logged-in state OR 2FA challenge
+  // .note - spa uses hash navigation, so networkidle may fire before render
+  const postLoginState = await Promise.race([
+    page
+      .waitForSelector(authSelectors.loggedIn.accountMenu, { timeout: 15000 })
+      .then(() => 'logged-in' as const),
+    page
+      .waitForSelector(authSelectors.loggedIn.domainsLink, { timeout: 15000 })
+      .then(() => 'logged-in' as const),
+    page
+      .waitForSelector(authSelectors.totpPage.codeInput, { timeout: 15000 })
+      .then(() => 'totp-required' as const),
+    page
+      .waitForSelector(authSelectors.sms2faPage.container, { timeout: 15000 })
+      .then(() => 'sms-required' as const),
+    page
+      .waitForSelector(authSelectors.passkey2faPage.container, {
+        timeout: 15000,
+      })
+      .then(() => 'passkey-required' as const),
+    page
+      .waitForSelector(authSelectors.loginPage.errorMessage, { timeout: 15000 })
+      .then(() => 'error' as const),
+  ]);
+
+  // handle unsupported 2FA methods (per blackbox criteria usecase.7)
+  if (postLoginState === 'sms-required') {
     throw new BadRequestError('totp required, sms not supported', {
       hint: 'reconfigure squarespace account to use authenticator app instead of sms',
     });
   }
-
-  const passkey2faContainer = await page.$(
-    authSelectors.passkey2faPage.container,
-  );
-  if (passkey2faContainer) {
+  if (postLoginState === 'passkey-required') {
     throw new BadRequestError('totp required, passkeys not supported', {
       hint: 'reconfigure squarespace account to use authenticator app instead of passkey',
     });
   }
 
-  // check if TOTP 2FA is required
-  const totpInput = await page.$(authSelectors.totpPage.codeInput);
-  if (totpInput) {
-    // generate and enter TOTP code
+  // handle login error
+  if (postLoginState === 'error') {
+    const errorText = await page.textContent(
+      authSelectors.loginPage.errorMessage,
+    );
+    throw new BadRequestError('authentication failed', {
+      reason: errorText || 'unknown error',
+      hint: 'check credentials and try again',
+    });
+  }
+
+  // handle TOTP 2FA if required
+  if (postLoginState === 'totp-required') {
     if (!credentials.totp?.secret) {
       throw new BadRequestError(
         'totp 2fa required but no totp secret provided',
@@ -58,29 +86,32 @@ export const performSquarespaceLogin = async (
     const totpCode = generateTotpCode(credentials.totp.secret);
     await page.fill(authSelectors.totpPage.codeInput, totpCode);
     await page.click(authSelectors.totpPage.submitButton);
-    await page.waitForLoadState('networkidle');
+
+    // wait for logged-in state after TOTP
+    const postTotpState = await Promise.race([
+      page
+        .waitForSelector(authSelectors.loggedIn.accountMenu, { timeout: 10000 })
+        .then(() => 'logged-in' as const),
+      page
+        .waitForSelector(authSelectors.loggedIn.domainsLink, { timeout: 10000 })
+        .then(() => 'logged-in' as const),
+      page
+        .waitForSelector(authSelectors.totpPage.errorMessage, {
+          timeout: 10000,
+        })
+        .then(() => 'totp-error' as const),
+    ]);
+
+    if (postTotpState === 'totp-error') {
+      const errorText = await page.textContent(
+        authSelectors.totpPage.errorMessage,
+      );
+      throw new BadRequestError('totp verification failed', {
+        reason: errorText || 'invalid code',
+        hint: 'check totp secret and try again',
+      });
+    }
   }
 
-  // verify login succeeded by checking for logged-in indicators
-  const isLoggedIn = await Promise.race([
-    page
-      .waitForSelector(authSelectors.loggedIn.accountMenu, { timeout: 10000 })
-      .then(() => true),
-    page
-      .waitForSelector(authSelectors.loggedIn.domainsLink, { timeout: 10000 })
-      .then(() => true),
-    page
-      .waitForSelector(authSelectors.loginPage.errorMessage, { timeout: 10000 })
-      .then(() => false),
-  ]);
-
-  if (!isLoggedIn) {
-    const errorText = await page.textContent(
-      authSelectors.loginPage.errorMessage,
-    );
-    throw new BadRequestError('authentication failed', {
-      reason: errorText || 'unknown error',
-      hint: 'check credentials and try again',
-    });
-  }
+  // at this point we should be logged in
 };

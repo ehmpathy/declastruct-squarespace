@@ -37,25 +37,32 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/browser.lib.sh"
 
-# check for subcommand
+# parse args (strips rhachet passthrough flags)
 SUBCOMMAND=""
-case "${1:-}" in
-  screenshot|screen|html|meta|console|network|storage)
-    SUBCOMMAND="$1"
-    shift
-    ;;
-esac
-
-# parse args
 TAB_INDEX=""
 SESSION="default"
 OUTPUT_PREFIX=""
 
 while [[ $# -gt 0 ]]; do
   case $1 in
+    # subcommands
+    screenshot|screen|html|meta|console|network|storage)
+      SUBCOMMAND="$1"
+      shift
+      ;;
+    # known flags
     --tab) TAB_INDEX="$2"; shift 2 ;;
     --session) SESSION="$2"; shift 2 ;;
     --output) OUTPUT_PREFIX="$2"; shift 2 ;;
+    # rhachet passthrough args - ignore
+    --repo|--role|--skill|--local|--global)
+      shift
+      # if next arg exists and is not a flag, skip it too
+      if [[ $# -gt 0 && "$1" != --* && "$1" != -* ]]; then
+        shift
+      fi
+      ;;
+    --) shift ;;
     *) shift ;;
   esac
 done
