@@ -60,7 +60,10 @@ const setTransferRequestWithPage = async (
 
   // fetch current transfer requests from cache
   const transfersAll = await getAllTransferRequests({}, context);
-  const transferFound = transfersAll.find((t) => t.domain.name === domainName);
+  const transferFound = transfersAll.find(
+    (t: DeclaredSquarespaceDomainTransferRequest) =>
+      t.domain.name === domainName,
+  );
 
   // for findsert, return if transfer request already exists AND is not expired
   // .note = transfer codes expire after 14 days per squarespace policy
@@ -130,7 +133,9 @@ const setTransferRequestMutation = withRemoteStateMutationRegistration(
 addTriggerToGetAllTransferRequests({
   invalidatedBy: {
     mutation: setTransferRequestMutation,
-    affects: ({ cachedQueryKeys }) => ({ keys: cachedQueryKeys }),
+    affects: ({ cachedQueryKeys }: { cachedQueryKeys: string[] }) => ({
+      keys: cachedQueryKeys,
+    }),
   },
 });
 

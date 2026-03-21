@@ -32,7 +32,7 @@ export const getOneDnsRecord = async (
 
   // filter to find the requested record
   const recordFound = dnsRecords.find(
-    (record) =>
+    (record: DeclaredSquarespaceDomainDnsRecord) =>
       record.domain.name === domainName &&
       record.type === input.by.unique.type &&
       record.host === input.by.unique.host,

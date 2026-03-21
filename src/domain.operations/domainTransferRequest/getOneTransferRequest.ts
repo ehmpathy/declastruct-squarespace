@@ -19,9 +19,10 @@ export const getOneTransferRequest = async (
   // fetch all transfer requests from cache
   const allTransfers = await getAllTransferRequests({}, context);
 
-  // find the one matching the domain reference
+  // find the one that matches the domain reference
   const transferFound = allTransfers.find(
-    (t) => t.domain.name === input.by.unique.domain?.name,
+    (t: DeclaredSquarespaceDomainTransferRequest) =>
+      t.domain.name === input.by.unique.domain?.name,
   );
 
   return transferFound ?? null;

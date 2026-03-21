@@ -12,10 +12,7 @@ import { DeclaredSquarespaceDomainTransferRequest } from '@src/domain.objects/De
  * .what - Remote state caching context for Squarespace domain operations
  * .why - Enables caching of query results with automatic invalidation on mutations
  */
-export const {
-  withRemoteStateQueryCache,
-  withRemoteStateMutationRegistration,
-} = createRemoteStateCacheContext<
+const remoteStateCacheContext = createRemoteStateCacheContext<
   [any, ContextSquarespaceAgent],
   SimpleOnDiskCache
 >({
@@ -64,3 +61,16 @@ export const {
     },
   },
 });
+
+/**
+ * .note - re-export via any to avoid TS4023 error
+ *         the underlying type uses WithRemoteStateCacheOptions which isn't exported from the package
+ *         type safety is preserved at usage sites via function parameter types
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const withRemoteStateQueryCache: any =
+  remoteStateCacheContext.withRemoteStateQueryCache;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const withRemoteStateMutationRegistration: any =
+  remoteStateCacheContext.withRemoteStateMutationRegistration;

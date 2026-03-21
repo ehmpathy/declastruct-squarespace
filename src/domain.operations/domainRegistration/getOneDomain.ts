@@ -30,7 +30,10 @@ export const getOneDomain = async (
   const domains = await getAllDomains({}, context);
 
   // filter to find the requested domain
-  const domainFound = domains.find((domain) => domain.name === domainName);
+  const domainFound = domains.find(
+    (domain: DeclaredSquarespaceDomainRegistration) =>
+      domain.name === domainName,
+  );
 
   // return domain or null if not found
   return domainFound ?? null;

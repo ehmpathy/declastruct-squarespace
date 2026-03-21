@@ -43,7 +43,9 @@ const setDomainWithPage = async (
 
   // fetch current state from getAllDomains cache
   const domainsAll = await getAllDomains({}, context);
-  const domainFound = domainsAll.find((d) => d.name === domainDesired.name);
+  const domainFound = domainsAll.find(
+    (d: DeclaredSquarespaceDomainRegistration) => d.name === domainDesired.name,
+  );
 
   // domain must exist to be set
   if (!domainFound) {
@@ -166,7 +168,9 @@ const setDomainMutation = withRemoteStateMutationRegistration(
 addTriggerToGetAllDomains({
   invalidatedBy: {
     mutation: setDomainMutation,
-    affects: ({ cachedQueryKeys }) => ({ keys: cachedQueryKeys }),
+    affects: ({ cachedQueryKeys }: { cachedQueryKeys: string[] }) => ({
+      keys: cachedQueryKeys,
+    }),
   },
 });
 
