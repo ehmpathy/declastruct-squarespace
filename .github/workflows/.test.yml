@@ -159,7 +159,9 @@ jobs:
           aws-region: ${{ inputs.creds-aws-region }}
 
       - name: install playwright browsers
-        run: pnpm exec playwright install chromium --with-deps
+        run: |
+          corepack enable pnpm
+          pnpm exec playwright install chromium --with-deps
 
       - name: start:testdb
         run: npm run start:testdb --if-present
@@ -196,7 +198,9 @@ jobs:
           aws-region: ${{ inputs.creds-aws-region }}
 
       - name: install playwright browsers
-        run: pnpm exec playwright install chromium --with-deps
+        run: |
+          corepack enable pnpm
+          pnpm exec playwright install chromium --with-deps
 
       - name: start:testdb
         run: npm run start:testdb --if-present
