@@ -28,7 +28,9 @@ const config: Config = {
     // here's an example of how to ignore esm module transformation, when needed
     // 'node_modules/(?!(@octokit|universal-user-agent|before-after-hook)/)',
   ],
-  testMatch: SKIP_IN_CI ? [] : ['**/*.integration.test.ts', '!**/.yalc/**'],
+  testMatch: SKIP_IN_CI
+    ? ['**/__never_match__/**']
+    : ['**/*.integration.test.ts', '!**/.yalc/**'],
   setupFilesAfterEnv: ['./jest.integration.env.ts'],
 
   // run sequentially to avoid bot detection against squarespace
