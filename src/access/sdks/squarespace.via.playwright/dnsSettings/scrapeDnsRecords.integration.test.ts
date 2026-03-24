@@ -39,10 +39,8 @@ describe('scrapeDnsRecords', () => {
       return { context, page, testDomain };
     });
 
-    afterAll(async () => {
-      // cleanup browser page
-      await scene.page.close().catch(() => {});
-    });
+    // .note - do NOT close page; leave it open for human/robot to inspect after test
+    // afterAll(async () => await scene.page.close().catch(() => {}));
 
     when('scraping DNS records for a domain', () => {
       const result = useBeforeAll(async () => {
@@ -53,8 +51,10 @@ describe('scrapeDnsRecords', () => {
         return { records };
       });
 
-      then('returns an array of DNS records', async () => {
+      then('returns a non-empty array of DNS records', async () => {
+        console.log('dns records found:', result.records);
         expect(Array.isArray(result.records)).toBe(true);
+        expect(result.records.length).toBeGreaterThan(0);
       });
 
       then('each record has a type', async () => {
@@ -85,6 +85,7 @@ describe('scrapeDnsRecords', () => {
           'NS',
           'SRV',
           'CAA',
+          'HTTPS',
         ];
         result.records.forEach((r: RawDnsRecord) => {
           // type might have extra text, check if it starts with a valid type

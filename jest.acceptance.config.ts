@@ -29,6 +29,9 @@ const config: Config = {
 
   // use 50% of threads to leave headroom for other processes
   maxWorkers: '50%', // https://stackoverflow.com/questions/71287710/why-does-jest-run-faster-with-maxworkers-50
+
+  // long timeout for acceptance tests - plan+apply can take 5+ minutes total
+  testTimeout: 600000,
 };
 
 // eslint-disable-next-line import/no-default-export

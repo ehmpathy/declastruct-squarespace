@@ -6,7 +6,7 @@ import { DeclaredSquarespaceDomainTransferRequest } from './DeclaredSquarespaceD
 
 describe('DeclaredSquarespaceDomainTransferRequest', () => {
   given('a transfer request declaration', () => {
-    when('creating a new transfer request', () => {
+    when('a new transfer request is declared', () => {
       const request = DeclaredSquarespaceDomainTransferRequest.as({
         domain: RefByUnique.as<typeof DeclaredSquarespaceDomainRegistration>({
           name: 'example.com',

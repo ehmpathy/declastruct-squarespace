@@ -59,18 +59,31 @@ const { chromium } = require('playwright');
   console.log('   ├─ tabs: ' + pages.length);
   console.log('   │');
 
+  // find focused tab
+  let focusedIndex = -1;
+  for (let i = 0; i < pages.length; i++) {
+    try {
+      const hasFocus = await pages[i].evaluate(() => document.hasFocus());
+      if (hasFocus) {
+        focusedIndex = i;
+        break;
+      }
+    } catch {}
+  }
+
   for (let i = 0; i < pages.length; i++) {
     const page = pages[i];
     const isLast = i === pages.length - 1;
     const prefix = isLast ? '   └─' : '   ├─';
     const indent = isLast ? '      ' : '   │  ';
+    const focusedMarker = i === focusedIndex ? ' ← focused' : '';
     try {
       const title = await page.title();
       const url = page.url();
-      console.log(prefix + ' [' + i + '] ' + (title || '(no title)'));
+      console.log(prefix + ' [' + i + '] ' + (title || '(no title)') + focusedMarker);
       console.log(indent + url);
     } catch {
-      console.log(prefix + ' [' + i + '] (page unavailable)');
+      console.log(prefix + ' [' + i + '] (page unavailable)' + focusedMarker);
       console.log(indent + '(context destroyed)');
     }
   }

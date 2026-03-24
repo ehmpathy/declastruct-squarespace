@@ -4,9 +4,13 @@
 #
 # .why  = storage state for auth and app state debug
 #
+# .pit-of-success:
+#   requires both --tab AND --url to prevent wrong-tab mistakes.
+#   if unsure which tab, run browser.describe first.
+#
 # usage:
-#   rhx browser.snapshot storage --tab 0
-#   rhx browser.snapshot storage --tab 0 --output .temp/debug
+#   rhx browser.snapshot storage --tab -1 --url 'account.squarespace.com/domains'
+#   rhx browser.snapshot storage --tab -1 --url 'account.squarespace.com/domains' --output .temp/debug
 #
 # output:
 #   $OUTPUT_PREFIX/snapshot.storage.json

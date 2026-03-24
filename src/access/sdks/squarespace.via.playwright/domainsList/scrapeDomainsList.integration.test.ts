@@ -1,7 +1,7 @@
 import { given, then, useBeforeAll, when } from 'test-fns';
 
 import {
-  getSampleSquarespaceContext,
+  getSampleSquarespaceProvider,
   requireSquarespaceCredentials,
 } from '../../../../.test/getSampleSquarespaceContext';
 import { getNewLoggedInBrowserPage } from '../browser/getNewLoggedInBrowserPage';
@@ -18,18 +18,28 @@ describe('scrapeDomainsList', () => {
 
   given('a logged-in browser session', () => {
     const scene = useBeforeAll(async () => {
-      // get context with real credentials
-      const context = getSampleSquarespaceContext();
+      // get provider with real credentials
+      const provider = getSampleSquarespaceProvider();
 
       // get a logged-in browser page
-      const page = await getNewLoggedInBrowserPage(context.agentOptions);
+      const page = await getNewLoggedInBrowserPage(
+        provider.context.agentOptions,
+      );
 
-      return { context, page };
+      // track if this is a persistent browser session
+      const isPersistentBrowser =
+        !!provider.context.agentOptions.browser?.extantBrowserWSEndpoint;
+
+      return { provider, page, isPersistentBrowser };
     });
 
     afterAll(async () => {
-      // cleanup browser page
-      await scene.page.close().catch(() => {});
+      // cleanup page unless persistent browser session (leave open for inspection)
+      if (!scene.isPersistentBrowser) {
+        await scene.page.close().catch(() => {});
+        // close browser session to allow process exit
+        await scene.provider.hooks.afterAll().catch(() => {});
+      }
     });
 
     when('scraping the domains list page', () => {
@@ -38,8 +48,10 @@ describe('scrapeDomainsList', () => {
         return { domains };
       });
 
-      then('returns an array of domains', async () => {
+      then('returns at least one domain', async () => {
+        console.log('domains found:', result.domains);
         expect(Array.isArray(result.domains)).toBe(true);
+        expect(result.domains.length).toBeGreaterThan(0);
       });
 
       then('each domain has a name', async () => {

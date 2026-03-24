@@ -27,8 +27,9 @@ const config: Config = {
   testMatch: ['**/*.integration.test.ts', '!**/.yalc/**'],
   setupFilesAfterEnv: ['./jest.integration.env.ts'],
 
-  // use 50% of threads to leave headroom for other processes
-  maxWorkers: '50%', // https://stackoverflow.com/questions/71287710/why-does-jest-run-faster-with-maxworkers-50
+  // run sequentially to avoid bot detection against squarespace
+  // parallel requests would trigger rate limits and captchas
+  maxWorkers: 1,
 };
 
 // eslint-disable-next-line import/no-default-export

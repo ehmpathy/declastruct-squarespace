@@ -11,6 +11,7 @@ import {
   DeclaredSquarespaceDomainTransferRequest,
   getDeclastructSquarespaceProvider,
 } from '../../index';
+import { getAllDomains } from '../../../../domain.operations/domainRegistration/getAllDomains';
 
 /**
  * .what = provider configuration for Squarespace acceptance tests
@@ -28,7 +29,7 @@ export const getProviders = async () => {
       hint: 'set SQUARESPACE_EMAIL and SQUARESPACE_PASSWORD environment variables',
     });
 
-  // create provider with credentials from environment
+  // create provider with credentials and browser config from environment
   const provider = getDeclastructSquarespaceProvider({
     account: {
       id: accountId,
@@ -38,6 +39,9 @@ export const getProviders = async () => {
       email,
       password,
       totpSecret,
+    },
+    browser: {
+      extantBrowserWSEndpoint: process.env.BROWSER_WS_ENDPOINT,
     },
   });
 
@@ -56,10 +60,7 @@ export const getResources = async () => {
     UnexpectedCodePathError.throw('provider required for acceptance test');
 
   // get all domains from account
-  const domains = await provider.daos.DeclaredSquarespaceDomainRegistration.get.all(
-    {},
-    provider.context,
-  );
+  const domains = await getAllDomains({}, provider.context);
 
   // fail-fast if test account has no domains
   if (domains.length === 0)

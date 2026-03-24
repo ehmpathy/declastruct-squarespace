@@ -3,8 +3,12 @@ import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import util from 'util';
 
+// set NODE_ENV to test mode
+// .why = ensures test mode detection works (e.g., never close pages in test mode)
+process.env.NODE_ENV = 'test';
+
 // eslint-disable-next-line no-undef
-jest.setTimeout(90000); // we're calling downstream apis
+jest.setTimeout(90000); // we call downstream apis
 
 // set console.log to not truncate nested objects
 util.inspect.defaultOptions.depth = 5;
@@ -19,15 +23,23 @@ if (!existsSync(join(process.cwd(), 'package.json')))
 /**
  * .what = fetch squarespace credentials from keyrack
  * .why = tests require real credentials; keyrack provides secure access
+ * .note = must unlock before get for ehmpath owner
  */
 const fetchKeyFromKeyrack = (key: string): string | null => {
   try {
+    // unlock ehmpath keyrack first (requires prikey)
+    execSync(
+      `npx rhx keyrack unlock --owner ehmpath --prikey ~/.ssh/ehmpath --key ${key} --env test`,
+      { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] },
+    );
+
+    // now get the key
     const result = execSync(
       `npx rhx keyrack get --owner ehmpath --key ${key} --env test --json`,
       { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] },
     );
     const parsed = JSON.parse(result);
-    return parsed.value ?? null;
+    return parsed.grant?.key?.secret ?? null;
   } catch {
     return null;
   }
@@ -45,6 +57,19 @@ if (!process.env.SQUARESPACE_PASSWORD) {
 if (!process.env.SQUARESPACE_TOTP_SECRET) {
   const totpSecret = fetchKeyFromKeyrack('SQUARESPACE_TOTP_SECRET');
   if (totpSecret) process.env.SQUARESPACE_TOTP_SECRET = totpSecret;
+}
+
+/**
+ * .what = auto-discover persistent browser via state file
+ * .why = browser.start skill writes wsEndpoint to file for tests to find
+ * .note = uses session-based path: .cache/browser.$session/ws-endpoint
+ */
+if (!process.env.BROWSER_WS_ENDPOINT) {
+  const wsEndpointFile = join(process.cwd(), '.cache/browser.default/ws-endpoint');
+  if (existsSync(wsEndpointFile)) {
+    process.env.BROWSER_WS_ENDPOINT = readFileSync(wsEndpointFile, 'utf-8').trim();
+    console.log('auto-discovered browser at:', process.env.BROWSER_WS_ENDPOINT);
+  }
 }
 
 /**

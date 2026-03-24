@@ -1,31 +1,59 @@
 /**
  * .what - CSS selectors for Squarespace domains list page
  * .why - Centralizes selectors for maintainability
+ * .note - selectors derived from actual HTML at account.squarespace.com/domains (Mar 2026)
  */
 export const domainsListSelectors = {
-  // domains list page container
-  container: '[data-test="domains-list"], .domains-list',
+  /**
+   * .what - container for domain list table
+   * .why - wait for this to confirm page loaded
+   */
+  container: '[data-test="domains-table"], table',
 
-  // individual domain row
-  domainRow: '[data-test="domain-row"], .domain-row',
-  domainRowByName: (domain: string) =>
-    `[data-test="domain-row"][data-domain="${domain}"], .domain-row[data-domain="${domain}"]`,
+  /**
+   * .what - row with domain data
+   * .why - iterate over these to extract each domain
+   * .note - actual selector: tr[data-testid="domains-table-row"]
+   */
+  domainRow: 'tr[data-testid="domains-table-row"]',
 
-  // domain row elements
-  domainName: '[data-test="domain-name"], .domain-name',
-  domainStatus: '[data-test="domain-status"], .domain-status',
-  domainExpiry: '[data-test="domain-expiry"], .domain-expiry',
+  /**
+   * .what - domain name within a row
+   * .why - extract the domain name text
+   * .note - actual link: a[href*="/domains/managed/"]
+   */
+  domainName: 'a[href*="/domains/managed/"]',
 
-  // actions
-  addDomainButton: '[data-test="add-domain"], button[aria-label*="Add domain"]',
-  domainSettingsLink:
-    '[data-test="domain-settings"], a[href*="/domains/"][href*="/settings"]',
+  /**
+   * .what - status badge (Active, Expired, etc)
+   * .why - extract domain status
+   * .note - status is in second td, inside a span
+   */
+  domainStatus: 'td:nth-child(2) span',
 
-  // loading states
-  loadingSpinner: '[data-test="loading"], .loading-spinner',
-  emptyState: '[data-test="empty-state"], .empty-state',
+  /**
+   * .what - expiration date
+   * .why - extract when domain expires
+   * .note - date is in last td, inside a p element
+   */
+  domainExpiry: 'td:last-child p',
 
-  // pagination
-  nextPageButton: '[data-test="next-page"], button[aria-label*="Next"]',
-  previousPageButton: '[data-test="prev-page"], button[aria-label*="Previous"]',
+  /**
+   * .what - load indicator
+   * .why - wait for content to finish load
+   */
+  loadSpinner: '[aria-busy="true"], [class*="spinner"]',
+
+  /**
+   * .what - empty state when no domains
+   * .why - detect accounts with no domains
+   */
+  emptyState: '[class*="empty"], [data-test="empty-state"]',
+
+  /**
+   * .what - pagination controls
+   * .why - navigate through domain list pages
+   */
+  nextPageButton: 'button[aria-label="Next page"]',
+  previousPageButton: 'button[aria-label="Previous page"]',
 };

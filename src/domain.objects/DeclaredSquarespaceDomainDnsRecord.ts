@@ -1,4 +1,4 @@
-import { DomainEntity, type RefByUnique } from 'domain-objects';
+import { DomainEntity, DomainLiteral, type RefByUnique } from 'domain-objects';
 
 import type { DeclaredSquarespaceDomainRegistration } from './DeclaredSquarespaceDomainRegistration';
 import type { DeclaredSquarespaceDomainDnsRecordType } from './literals/DeclaredSquarespaceDomainDnsRecordType';
@@ -53,4 +53,5 @@ export class DeclaredSquarespaceDomainDnsRecord extends DomainEntity<DeclaredSqu
   public static unique = ['domain', 'type', 'host'] as const;
   public static metadata = [] as const;
   public static readonly = ['isPreset'] as const;
+  public static nested = { domain: DomainLiteral };
 }

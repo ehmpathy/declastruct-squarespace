@@ -18,12 +18,11 @@ exports[`browser.snapshot.console given: [case2] without --tab when: [t0] skill 
 🪨 run solid skill repo=.this/role=any/skill=browser.snapshot.console
    └─ 💥 failed with an error
 
-error: --tab required
+error: --focused OR (--tab + --url) required
 
 usage:
-  rhx browser.snapshot --tab 0              # all assets
-  rhx browser.snapshot screenshot --tab 0   # just screenshot
-  rhx browser.snapshot html --tab 0         # just html
+  rhx browser.snapshot --focused                     # snapshot focused tab
+  rhx browser.snapshot --tab 0 --url 'example.com'   # snapshot by index
 "
 `;
 

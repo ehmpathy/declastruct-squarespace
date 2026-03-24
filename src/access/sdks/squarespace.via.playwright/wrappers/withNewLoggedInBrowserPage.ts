@@ -9,6 +9,13 @@ import type {
 import { checkSessionHealth } from '../auth/checkSessionHealth';
 import { performSquarespaceLogin } from '../auth/performSquarespaceLogin';
 import { getNewLoggedInBrowserPage } from '../browser/getNewLoggedInBrowserPage';
+import { capturePageStateOnError } from '../debug/capturePageStateOnError';
+
+/**
+ * .what = detect if we are in test mode
+ * .why = never close pages in test mode so humans/robots can inspect after failure
+ */
+const isTestMode = (): boolean => process.env.NODE_ENV === 'test';
 
 /**
  * .what - Wrapper that provides a logged-in browser page to operations
@@ -75,8 +82,10 @@ export const withNewLoggedInBrowserPage = <TInput, TOutput>(
         await page.bringToFront();
         const result = await logic(input, { ...context, page });
 
-        // Close page unless reused
-        if (!options?.reusePageKey) {
+        // close page unless reused OR in test mode
+        // .note - never close in test mode so humans/robots can inspect after
+        // .note - page.close() has fail-fast guard that throws in test mode anyway
+        if (!options?.reusePageKey && !isTestMode()) {
           await page.close();
         }
 
@@ -87,11 +96,23 @@ export const withNewLoggedInBrowserPage = <TInput, TOutput>(
 
         return result;
       } catch (error) {
-        // Invalidate cached page on error (page may be in bad state)
+        // capture page state for debug BEFORE any cleanup
+        if (error instanceof Error) {
+          await capturePageStateOnError({ page, error }).catch(() => {});
+        }
+
+        // invalidate cached page on error (page may be in bad state)
         if (getPage.invalidate) {
           getPage.invalidate({ forInput: [] });
         }
-        await page.close().catch(() => {}); // Best effort close
+
+        // close page ONLY if not in test mode
+        // .note - never close in test mode so humans/robots can inspect after failure
+        // .note - page.close() has fail-fast guard that throws in test mode anyway
+        if (!isTestMode()) {
+          await page.close();
+        }
+
         throw error;
       }
     });

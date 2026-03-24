@@ -5,68 +5,37 @@ import { scrapeDomainDetail } from '../../access/sdks/squarespace.via.playwright
 import { toggleDnssec } from '../../access/sdks/squarespace.via.playwright/domainDetail/toggleDnssec';
 import { toggleDomainLock } from '../../access/sdks/squarespace.via.playwright/domainDetail/toggleDomainLock';
 import { withNewLoggedInBrowserPage } from '../../access/sdks/squarespace.via.playwright/wrappers/withNewLoggedInBrowserPage';
-import type { ContextSquarespaceAgentPage } from '../../domain.objects/ContextSquarespaceAgent';
+import type {
+  ContextSquarespaceAgent,
+  ContextSquarespaceAgentPage,
+} from '../../domain.objects/ContextSquarespaceAgent';
 import type { DeclaredSquarespaceDomainRegistration } from '../../domain.objects/DeclaredSquarespaceDomainRegistration';
 import { withRemoteStateMutationRegistration } from '../../infra/performance/withRemoteStateCache';
 import { castIntoDeclaredSquarespaceDomainRegistration } from './castIntoDeclaredSquarespaceDomainRegistration';
 import { addTriggerToGetAllDomains, getAllDomains } from './getAllDomains';
 
+type SetDomainInput = PickOne<{
+  findsert: Pick<DeclaredSquarespaceDomainRegistration, 'name'> &
+    Partial<
+      Pick<DeclaredSquarespaceDomainRegistration, 'isLocked' | 'dnssecEnabled'>
+    >;
+  upsert: Pick<DeclaredSquarespaceDomainRegistration, 'name'> &
+    Partial<
+      Pick<DeclaredSquarespaceDomainRegistration, 'isLocked' | 'dnssecEnabled'>
+    >;
+}>;
+
 /**
- * .what = internal implementation of setDomain with page access
- * .why = separates page logic from caching and wrapping concerns
+ * .what = core page-level implementation of setDomain
+ * .why = performs UI mutations only; domain lookup is done outside to avoid bottleneck deadlock
  */
-const setDomainWithPage = async (
-  input: PickOne<{
-    findsert: Pick<DeclaredSquarespaceDomainRegistration, 'name'> &
-      Partial<
-        Pick<
-          DeclaredSquarespaceDomainRegistration,
-          'isLocked' | 'dnssecEnabled'
-        >
-      >;
-    upsert: Pick<DeclaredSquarespaceDomainRegistration, 'name'> &
-      Partial<
-        Pick<
-          DeclaredSquarespaceDomainRegistration,
-          'isLocked' | 'dnssecEnabled'
-        >
-      >;
-  }>,
+const setDomainCore = async (
+  input: SetDomainInput,
   context: ContextSquarespaceAgentPage,
+  domainFound: DeclaredSquarespaceDomainRegistration,
 ): Promise<DeclaredSquarespaceDomainRegistration> => {
   const { page, agentOptions } = context;
   const domainDesired = input.findsert ?? input.upsert;
-
-  // validate domain name provided
-  if (!domainDesired?.name)
-    UnexpectedCodePathError.throw('no domain name in input', { input });
-
-  // fetch current state from getAllDomains cache
-  const domainsAll = await getAllDomains({}, context);
-  const domainFound = domainsAll.find(
-    (d: DeclaredSquarespaceDomainRegistration) => d.name === domainDesired.name,
-  );
-
-  // domain must exist to be set
-  if (!domainFound) {
-    throw new BadRequestError('domain not found in account', {
-      domainName: domainDesired.name,
-    });
-  }
-
-  // for findsert, return if no changes needed
-  if (input.findsert) {
-    const noLockChange =
-      input.findsert.isLocked === undefined ||
-      input.findsert.isLocked === domainFound.isLocked;
-    const noDnssecChange =
-      input.findsert.dnssecEnabled === undefined ||
-      input.findsert.dnssecEnabled === domainFound.dnssecEnabled;
-
-    if (noLockChange && noDnssecChange) {
-      return domainFound;
-    }
-  }
 
   // apply changes
   const changes: string[] = [];
@@ -154,14 +123,64 @@ const setDomainWithPage = async (
 };
 
 /**
+ * .what = orchestrates setDomain: fetches domain first, then mutates via page
+ * .why = getAllDomains MUST be called OUTSIDE withNewLoggedInBrowserPage to avoid
+ *        re-entrant bottleneck deadlock (both use maxConcurrent: 1)
+ */
+const setDomainWithPage = async (
+  input: SetDomainInput,
+  context: ContextSquarespaceAgent,
+): Promise<DeclaredSquarespaceDomainRegistration> => {
+  const domainDesired = input.findsert ?? input.upsert;
+
+  // validate domain name provided
+  if (!domainDesired?.name)
+    UnexpectedCodePathError.throw('no domain name in input', { input });
+
+  // fetch current state OUTSIDE page wrapper to avoid bottleneck deadlock
+  const domainsAll = await getAllDomains({}, context);
+  const domainFound = domainsAll.find(
+    (d: DeclaredSquarespaceDomainRegistration) => d.name === domainDesired.name,
+  );
+
+  // domain must exist to be set
+  if (!domainFound) {
+    throw new BadRequestError('domain not found in account', {
+      domainName: domainDesired.name,
+    });
+  }
+
+  // for findsert, return if no changes needed (skip page access entirely)
+  if (input.findsert) {
+    const noLockChange =
+      input.findsert.isLocked === undefined ||
+      input.findsert.isLocked === domainFound.isLocked;
+    const noDnssecChange =
+      input.findsert.dnssecEnabled === undefined ||
+      input.findsert.dnssecEnabled === domainFound.dnssecEnabled;
+
+    if (noLockChange && noDnssecChange) {
+      return domainFound;
+    }
+  }
+
+  // now get page and perform mutations (sequential bottleneck use, not nested)
+  const wrappedCore = withNewLoggedInBrowserPage(
+    (coreInput: SetDomainInput, pageContext: ContextSquarespaceAgentPage) =>
+      setDomainCore(coreInput, pageContext, domainFound),
+    { reusePageKey: 'domainDetail' },
+  );
+
+  return wrappedCore(input, context);
+};
+
+/**
  * .what = mutation-registered setDomain operation
  * .why = enables cache invalidation of getAllDomains on mutation
  */
 const setDomainMutation = withRemoteStateMutationRegistration(
-  withNewLoggedInBrowserPage(setDomainWithPage, {
-    reusePageKey: 'domainDetail',
-  }),
-  { name: 'setDomain' },
+  setDomainWithPage,
+  { name: { override: 'setDomain' } },
 );
 
 // register cache invalidation trigger

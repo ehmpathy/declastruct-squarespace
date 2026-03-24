@@ -53,6 +53,7 @@ const launchBrowser = async (input: {
 /**
  * .what - create browser context with optional storageState restore
  * .why - context holds session cookies and localStorage
+ * .note - viewport null uses browser's natural size (matches browser.start)
  */
 const createBrowserContext = async (input: {
   browser: Browser;
@@ -63,7 +64,7 @@ const createBrowserContext = async (input: {
   return browser.newContext({
     userAgent:
       'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-    viewport: { width: 1920, height: 1080 },
+    viewport: null, // use browser's natural viewport (matches browser.start)
     storageState,
   });
 };

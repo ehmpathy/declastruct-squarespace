@@ -21,7 +21,7 @@ describe('browser.snapshot.network', () => {
 
     when('[t0] skill is invoked', () => {
       then('it captures network entries', () => {
-        const result = rhxFull(`rhx browser.snapshot.network --tab 0 --session ${session}`);
+        const result = rhxFull(`rhx browser.snapshot.network --tab 0 --url 'chrome://new-tab-page/' --session ${session}`);
 
         expect(asStableSnapshot(result.stdout)).toMatchSnapshot('stdout');
         expect(asStableSnapshot(result.stderr)).toMatchSnapshot('stderr');
@@ -43,7 +43,7 @@ describe('browser.snapshot.network', () => {
         expect(error).toBeTruthy();
         expect(asStableSnapshot(error?.stdout || '')).toMatchSnapshot('stdout');
         expect(asStableSnapshot(error?.stderr || '')).toMatchSnapshot('stderr');
-        expect(error?.message).toContain('--tab required');
+        expect(error?.message).toContain('--focused OR (--tab + --url) required');
       });
     });
   });

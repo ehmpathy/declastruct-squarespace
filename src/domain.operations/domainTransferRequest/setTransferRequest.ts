@@ -4,7 +4,10 @@ import type { PickOne } from 'type-fns';
 
 import { requestTransferCode } from '../../access/sdks/squarespace.via.playwright/domainDetail/requestTransferCode';
 import { withNewLoggedInBrowserPage } from '../../access/sdks/squarespace.via.playwright/wrappers/withNewLoggedInBrowserPage';
-import type { ContextSquarespaceAgentPage } from '../../domain.objects/ContextSquarespaceAgent';
+import type {
+  ContextSquarespaceAgent,
+  ContextSquarespaceAgentPage,
+} from '../../domain.objects/ContextSquarespaceAgent';
 import type { DeclaredSquarespaceDomainRegistration } from '../../domain.objects/DeclaredSquarespaceDomainRegistration';
 import { DeclaredSquarespaceDomainTransferRequest } from '../../domain.objects/DeclaredSquarespaceDomainTransferRequest';
 import { withRemoteStateMutationRegistration } from '../../infra/performance/withRemoteStateCache';
@@ -14,18 +17,52 @@ import {
   getAllTransferRequests,
 } from './getAllTransferRequests';
 
+type SetTransferRequestInput = PickOne<{
+  findsert: Pick<DeclaredSquarespaceDomainTransferRequest, 'domain'>;
+  upsert: Pick<DeclaredSquarespaceDomainTransferRequest, 'domain'>;
+}>;
+
 /**
- * .what = internal implementation of setTransferRequest with page access
- * .why = separates page logic from caching and wrapping concerns
+ * .what = core page-level implementation of setTransferRequest
+ * .why = performs UI mutations only; lookups are done outside to avoid bottleneck deadlock
  */
-const setTransferRequestWithPage = async (
-  input: PickOne<{
-    findsert: Pick<DeclaredSquarespaceDomainTransferRequest, 'domain'>;
-    upsert: Pick<DeclaredSquarespaceDomainTransferRequest, 'domain'>;
-  }>,
+const setTransferRequestCore = async (
+  input: SetTransferRequestInput,
   context: ContextSquarespaceAgentPage,
+  domainName: string,
 ): Promise<DeclaredSquarespaceDomainTransferRequest> => {
   const { page, agentOptions } = context;
+
+  // request transfer code for the domain
+  // .note = squarespace sends code via email, not displayed on page
+  await requestTransferCode({
+    page,
+    domain: domainName,
+    credentials: agentOptions.credentials,
+  });
+
+  // code sent via email (not returned from scraper)
+  const status = 'CODE_SENT';
+
+  // return new transfer request
+  return new DeclaredSquarespaceDomainTransferRequest({
+    domain: RefByUnique.as<typeof DeclaredSquarespaceDomainRegistration>({
+      name: domainName,
+    }),
+    requestedAt: new Date().toISOString(),
+    status,
+  });
+};
+
+/**
+ * .what = orchestrates setTransferRequest: validates and fetches data first, then mutates via page
+ * .why = getOneDomain and getAllTransferRequests MUST be called OUTSIDE withNewLoggedInBrowserPage
+ *        to avoid re-entrant bottleneck deadlock (both use maxConcurrent: 1)
+ */
+const setTransferRequestWithPage = async (
+  input: SetTransferRequestInput,
+  context: ContextSquarespaceAgent,
+): Promise<DeclaredSquarespaceDomainTransferRequest> => {
   const requestDesired = input.findsert ?? input.upsert;
 
   // validate domain reference provided
@@ -34,7 +71,7 @@ const setTransferRequestWithPage = async (
 
   const domainName = requestDesired.domain.name;
 
-  // verify domain is unlocked before transfer code request
+  // verify domain is unlocked OUTSIDE page wrapper to avoid bottleneck deadlock
   // .note = criteria: locked domain must return error, not attempt transfer
   const domainFound = await getOneDomain(
     { by: { unique: { name: domainName } } },
@@ -58,14 +95,14 @@ const setTransferRequestWithPage = async (
     });
   }
 
-  // fetch current transfer requests from cache
+  // fetch current transfer requests OUTSIDE page wrapper to avoid bottleneck deadlock
   const transfersAll = await getAllTransferRequests({}, context);
   const transferFound = transfersAll.find(
     (t: DeclaredSquarespaceDomainTransferRequest) =>
       t.domain.name === domainName,
   );
 
-  // for findsert, return if transfer request already exists AND is not expired
+  // for findsert, return if transfer request already extant AND not expired
   // .note = transfer codes expire after 14 days per squarespace policy
   if (input.findsert && transferFound) {
     const requestedAt = new Date(transferFound.requestedAt);
@@ -81,7 +118,7 @@ const setTransferRequestWithPage = async (
     // if expired, fall through to request new code
   }
 
-  // for upsert with existing request in completed/cancelled state, allow re-request
+  // for upsert with extant request in completed/cancelled state, allow re-request
   if (
     input.upsert &&
     transferFound &&
@@ -91,31 +128,16 @@ const setTransferRequestWithPage = async (
     return transferFound;
   }
 
-  // request transfer code for the domain
-  const result = await requestTransferCode({
-    page,
-    domain: domainName,
-    credentials: agentOptions.credentials,
-  });
+  // now get page and perform mutation (sequential bottleneck use, not nested)
+  const wrappedCore = withNewLoggedInBrowserPage(
+    (
+      coreInput: SetTransferRequestInput,
+      pageContext: ContextSquarespaceAgentPage,
+    ) => setTransferRequestCore(coreInput, pageContext, domainName),
+    { reusePageKey: 'domainDetail' },
+  );
 
-  if (!result.success) {
-    throw new BadRequestError('failed to request transfer code', {
-      domain: domainName,
-      result,
-    });
-  }
-
-  // determine status based on result
-  const status = result.emailSent ? 'CODE_SENT' : 'REQUESTED';
-
-  // return new transfer request
-  return new DeclaredSquarespaceDomainTransferRequest({
-    domain: RefByUnique.as<typeof DeclaredSquarespaceDomainRegistration>({
-      name: domainName,
-    }),
-    requestedAt: new Date().toISOString(),
-    status,
-  });
+  return wrappedCore(input, context);
 };
 
 /**
@@ -123,10 +145,8 @@ const setTransferRequestWithPage = async (
  * .why = enables cache invalidation of getAllTransferRequests on mutation
  */
 const setTransferRequestMutation = withRemoteStateMutationRegistration(
-  withNewLoggedInBrowserPage(setTransferRequestWithPage, {
-    reusePageKey: 'domainDetail',
-  }),
-  { name: 'setTransferRequest' },
+  setTransferRequestWithPage,
+  { name: { override: 'setTransferRequest' } },
 );
 
 // register cache invalidation trigger

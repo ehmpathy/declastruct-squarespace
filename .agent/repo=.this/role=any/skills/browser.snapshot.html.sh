@@ -4,9 +4,13 @@
 #
 # .why  = DOM state for selector debug
 #
+# .pit-of-success:
+#   requires both --tab AND --url to prevent wrong-tab mistakes.
+#   if unsure which tab, run browser.describe first.
+#
 # usage:
-#   rhx browser.snapshot html --tab 0
-#   rhx browser.snapshot html --tab 0 --output .temp/debug
+#   rhx browser.snapshot html --tab -1 --url 'account.squarespace.com/domains'
+#   rhx browser.snapshot html --tab -1 --url 'account.squarespace.com/domains' --output .temp/debug
 #
 # output:
 #   $OUTPUT_PREFIX/snapshot.html
@@ -32,9 +36,26 @@ const { chromium } = require('playwright');
 
   const standalone = '$STANDALONE_MODE' === 'true';
 
-  await page.waitForLoadState('domcontentloaded').catch(() => {});
+  // try page.content() first, fallback to evaluate innerHTML
+  let html = null;
+  let error = null;
+
   try {
-    const html = await page.content();
+    html = await page.content();
+  } catch (e) {
+    error = e;
+  }
+
+  // fallback: grab innerHTML directly via evaluate (works even when page.content() fails)
+  if (!html) {
+    try {
+      html = await page.evaluate(() => document.documentElement.outerHTML);
+    } catch (e2) {
+      error = error || e2;
+    }
+  }
+
+  if (html) {
     require('fs').writeFileSync('$OUTPUT_FILE', html);
     if (standalone) {
       console.log('🐢 cool');
@@ -44,13 +65,13 @@ const { chromium } = require('playwright');
     } else {
       console.log('   ├─ ✓ snapshot.html');
     }
-  } catch (e) {
-    require('fs').writeFileSync('$OUTPUT_FILE', '<!-- content unavailable: ' + e.message + ' -->');
+  } else {
+    require('fs').writeFileSync('$OUTPUT_FILE', '<!-- content unavailable: ' + (error ? error.message : 'unknown') + ' -->');
     if (standalone) {
       console.log('🐢 bummer dude');
       console.log('');
       console.log('🐚 browser.snapshot html');
-      console.log('   └─ ⚠ unavailable: ' + e.message);
+      console.log('   └─ ⚠ unavailable: ' + (error ? error.message : 'unknown'));
     } else {
       console.log('   ├─ ⚠ snapshot.html (content unavailable)');
     }

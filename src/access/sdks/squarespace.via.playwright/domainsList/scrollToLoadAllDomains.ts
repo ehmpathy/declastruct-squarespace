@@ -46,10 +46,10 @@ export const scrollToLoadAllDomains = async (input: {
     // wait for potential new content to load
     await page.waitForTimeout(1000);
 
-    // check for loading spinner and wait for it to disappear
-    const spinner = await page.$(domainsListSelectors.loadingSpinner);
+    // check for load spinner and wait for it to disappear
+    const spinner = await page.$(domainsListSelectors.loadSpinner);
     if (spinner) {
-      await page.waitForSelector(domainsListSelectors.loadingSpinner, {
+      await page.waitForSelector(domainsListSelectors.loadSpinner, {
         state: 'hidden',
         timeout: 10000,
       });

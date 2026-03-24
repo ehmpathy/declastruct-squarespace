@@ -4,13 +4,17 @@
 #
 # .why  = JS errors and debug output for diagnosis
 #
+# .pit-of-success:
+#   requires both --tab AND --url to prevent wrong-tab mistakes.
+#   if unsure which tab, run browser.describe first.
+#
 # .note = only captures NEW logs after listener attaches.
 #         for extant pages, historical logs are not available.
 #         trigger a page action to capture fresh logs.
 #
 # usage:
-#   rhx browser.snapshot console --tab 0
-#   rhx browser.snapshot console --tab 0 --output .temp/debug
+#   rhx browser.snapshot console --tab -1 --url 'account.squarespace.com/domains'
+#   rhx browser.snapshot console --tab -1 --url 'account.squarespace.com/domains' --output .temp/debug
 #
 # output:
 #   $OUTPUT_PREFIX/snapshot.console.json

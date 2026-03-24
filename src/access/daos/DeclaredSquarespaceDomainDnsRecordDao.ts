@@ -1,41 +1,36 @@
-import type { RefByUnique } from 'domain-objects';
+import { genDeclastructDao } from 'declastruct';
+import { BadRequestError } from 'helpful-errors';
 
 import type { ContextSquarespaceAgent } from '../../domain.objects/ContextSquarespaceAgent';
-import type { DeclaredSquarespaceDomainDnsRecord } from '../../domain.objects/DeclaredSquarespaceDomainDnsRecord';
-import type { DeclaredSquarespaceDomainRegistration } from '../../domain.objects/DeclaredSquarespaceDomainRegistration';
-import { getAllDnsRecords } from '../../domain.operations/domainDnsRecord/getAllDnsRecords';
+import { DeclaredSquarespaceDomainDnsRecord } from '../../domain.objects/DeclaredSquarespaceDomainDnsRecord';
 import { getOneDnsRecord } from '../../domain.operations/domainDnsRecord/getOneDnsRecord';
 
 /**
  * .what = DAO for DeclaredSquarespaceDomainDnsRecord
  * .why = provides a unified interface for DNS record operations
+ * .note = read-only DAO; DNS mutations not supported
  */
-export const DeclaredSquarespaceDomainDnsRecordDao = {
+export const DeclaredSquarespaceDomainDnsRecordDao = genDeclastructDao<
+  typeof DeclaredSquarespaceDomainDnsRecord,
+  ContextSquarespaceAgent
+>({
+  dobj: DeclaredSquarespaceDomainDnsRecord,
   get: {
-    /**
-     * .what = gets a single DNS record by unique key
-     * .why = enables lookup of specific DNS record by domain+type+host
-     */
     one: {
-      byUnique: async (
-        input: {
-          unique: RefByUnique<typeof DeclaredSquarespaceDomainDnsRecord>;
-        },
-        context: ContextSquarespaceAgent,
-      ): Promise<DeclaredSquarespaceDomainDnsRecord | null> =>
-        getOneDnsRecord({ by: { unique: input.unique } }, context),
+      byUnique: async (input, context) =>
+        getOneDnsRecord({ by: { unique: input } }, context),
+      byPrimary: null,
     },
-
-    /**
-     * .what = gets all DNS records for a domain
-     * .why = enables batch operations on DNS configuration
-     */
-    all: async (
-      input: {
-        domain: RefByUnique<typeof DeclaredSquarespaceDomainRegistration>;
-      },
-      context: ContextSquarespaceAgent,
-    ): Promise<DeclaredSquarespaceDomainDnsRecord[]> =>
-      getAllDnsRecords({ domain: input.domain }, context),
   },
-};
+  set: {
+    /**
+     * .what = DNS mutations not supported
+     * .why = out of scope for domain transfer workflow
+     */
+    findsert: async () => {
+      throw new BadRequestError('DNS record mutations not supported');
+    },
+    upsert: null,
+    delete: null,
+  },
+});

@@ -1,21 +1,25 @@
 /**
  * .what - CSS selectors for Squarespace DNS settings page
  * .why - Centralizes selectors for maintainability
+ *
+ * .note - squarespace uses data-testid (not data-test)
+ * .note - column order: Host, Type, Priority, TTL, Data
  */
 export const dnsSettingsSelectors = {
   // DNS settings page container
-  container: '[data-test="dns-settings"], .dns-settings',
+  container: '[data-testid="dns-settings"], .dns-settings, main',
 
   // DNS records table
-  recordsTable: '[data-test="dns-records-table"], table.dns-records',
-  recordRow: '[data-test="dns-record-row"], tr.dns-record',
+  recordsTable: 'table',
+  recordRow: '[data-testid="dns-record-row"], tr[data-testid]',
 
-  // record row elements
-  recordType: '[data-test="record-type"], .record-type',
-  recordHost: '[data-test="record-host"], .record-host',
-  recordValue: '[data-test="record-value"], .record-value',
-  recordTtl: '[data-test="record-ttl"], .record-ttl',
-  recordPriority: '[data-test="record-priority"], .record-priority',
+  // record row cells (by position: Host, Type, Priority, TTL, Data)
+  // .note - use td:nth-child(N) since cells don't have data-testid
+  recordHost: 'td:nth-child(1)',
+  recordType: 'td:nth-child(2)',
+  recordPriority: 'td:nth-child(3)',
+  recordTtl: 'td:nth-child(4)',
+  recordValue: 'td:nth-child(5)',
 
   // record actions
   editRecordButton: '[data-test="edit-record"], button[aria-label*="Edit"]',
@@ -43,9 +47,18 @@ export const dnsSettingsSelectors = {
   // error states
   errorMessage: '[data-test="error"], .error-message',
 
-  // dnssec section (consolidated from toggleDnssec.ts)
+  // dnssec section (on /dns/dnssec page)
+  // .note = toggle is a checkbox input with data-toggle-input="true"
+  // .note = status determined by input value attribute ("true" or "false")
   dnssecSection: '[data-test="dnssec"], .dnssec-section',
-  dnssecToggle: '[data-test="dnssec-toggle"], button[aria-label*="DNSSEC"]',
+  dnssecToggle: 'input[data-toggle-input="true"]',
+  dnssecToggleLabel: 'label:has(input[data-toggle-input="true"])',
   dnssecStatus: '[data-test="dnssec-status"], .dnssec-status',
   dnssecEnabledIndicator: '.dnssec-enabled, [data-dnssec="enabled"]',
+
+  // dnssec confirmation modal (appears when dnssec toggle is clicked)
+  // .note = modal asks "Turn off DNS Security Extensions?"
+  dnssecConfirmModal: '[data-testid="confirm-btn"]',
+  dnssecConfirmButton: '[data-testid="confirm-btn"]',
+  dnssecCancelButton: '[data-testid="cancel-btn"]',
 };

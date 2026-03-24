@@ -21,13 +21,14 @@ const remoteStateCacheContext = createRemoteStateCacheContext<
 
   serialize: {
     // Create a unique, observable cache key
-    key: ({ forInput }) => {
+    // .note - KeySerializationMethod expects positional args (input, context), not { forInput }
+    key: (input: any, context: ContextSquarespaceAgent) => {
       const key = [
         // Namespace to the account
-        forInput[1].agentOptions.account.id,
+        context.agentOptions.account.id,
 
         // Preview of key-value pairs for observability
-        JSON.stringify(forInput[0])
+        JSON.stringify(input)
           .replace(/[{}[\]:,]/gi, '_')
           .replace(/[^0-9a-z_]/gi, '')
           .replace(/__+/g, '_')
@@ -36,7 +37,7 @@ const remoteStateCacheContext = createRemoteStateCacheContext<
           .replace(/_$/, ''),
 
         // Unique hash suffix
-        asHashSha256(JSON.stringify(forInput[0])),
+        asHashSha256(JSON.stringify(input)),
 
         // Serialization version (bump on schema changes)
         'v1',

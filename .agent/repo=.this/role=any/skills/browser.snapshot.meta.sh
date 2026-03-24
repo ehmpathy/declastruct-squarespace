@@ -4,9 +4,13 @@
 #
 # .why  = context for snapshot interpretation
 #
+# .pit-of-success:
+#   requires both --tab AND --url to prevent wrong-tab mistakes.
+#   if unsure which tab, run browser.describe first.
+#
 # usage:
-#   rhx browser.snapshot meta --tab 0
-#   rhx browser.snapshot meta --tab 0 --output .temp/debug
+#   rhx browser.snapshot meta --tab -1 --url 'account.squarespace.com/domains'
+#   rhx browser.snapshot meta --tab -1 --url 'account.squarespace.com/domains' --output .temp/debug
 #
 # output:
 #   $OUTPUT_PREFIX/snapshot.meta.json

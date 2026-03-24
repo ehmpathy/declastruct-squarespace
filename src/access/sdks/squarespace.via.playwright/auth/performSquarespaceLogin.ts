@@ -16,7 +16,7 @@ export const performSquarespaceLogin = async (
 ): Promise<void> => {
   // navigate to login page
   await page.goto('https://login.squarespace.com/');
-  await page.waitForLoadState('networkidle');
+  await page.waitForLoadState('load');
 
   // enter email and password
   await page.fill(authSelectors.loginPage.emailInput, credentials.email);

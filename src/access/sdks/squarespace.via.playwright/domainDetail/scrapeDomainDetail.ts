@@ -1,5 +1,6 @@
 import type { Page } from 'playwright';
 
+import { waitForSquarespaceReactRender } from '../navigation/waitForSquarespaceReactRender';
 import { domainDetailSelectors } from '../selectors/domainDetailSelectors';
 
 /**
@@ -26,12 +27,33 @@ export const scrapeDomainDetail = async (input: {
 }): Promise<RawDomainDetail> => {
   const { page, domain } = input;
 
-  // navigate to domain detail page
-  await page.goto(`https://account.squarespace.com/domains/${domain}/overview`);
-  await page.waitForLoadState('networkidle');
-  await page.waitForSelector(domainDetailSelectors.container, {
-    timeout: 30000,
-  });
+  // navigate to domain detail page (skip if already there)
+  // .note = skip navigation to preserve in-memory state after recent mutations
+  const expectedUrl = `https://account.squarespace.com/domains/managed/${domain}`;
+  const currentUrlBeforeNav = page.url();
+  const isAlreadyOnPage =
+    currentUrlBeforeNav.includes(`/domains/managed/${domain}`) &&
+    !currentUrlBeforeNav.includes('/dns');
+
+  if (!isAlreadyOnPage) {
+    await page.goto(expectedUrl);
+    await page.waitForLoadState('load');
+    // wait for React to render (not just body - body has noscript fallback immediately)
+    await waitForSquarespaceReactRender({ page });
+  }
+
+  // fail-fast: assert URL AFTER content load
+  // .note - check after content because SPA may redirect post-hydration
+  const currentUrl = page.url();
+  console.log('scrapeDomainDetail: final URL =', currentUrl);
+  if (
+    !currentUrl.includes(`/domains/managed/${domain}`) ||
+    currentUrl.includes('/dns')
+  ) {
+    throw new Error(
+      `scrapeDomainDetail: URL mismatch. expected /domains/managed/${domain} (not /dns), got ${currentUrl}. squarespace may have redirected.`,
+    );
+  }
 
   // extract domain name
   const nameElement = await page.$(domainDetailSelectors.domainName);
@@ -53,14 +75,10 @@ export const scrapeDomainDetail = async (input: {
     ? await expiryElement.textContent()
     : null;
 
-  // extract lock status
-  const lockStatusElement = await page.$(domainDetailSelectors.lockStatus);
-  const lockStatusText = lockStatusElement
-    ? await lockStatusElement.textContent()
-    : '';
-  const isLocked =
-    (lockStatusText?.toLowerCase().includes('locked') ?? false) &&
-    !lockStatusText?.toLowerCase().includes('unlocked');
+  // extract lock status via checkbox state
+  // .note = checkbox isChecked() is more reliable than text parse
+  const lockToggleInput = await page.$(domainDetailSelectors.lockToggleInput);
+  const isLocked = lockToggleInput ? await lockToggleInput.isChecked() : false;
 
   // extract lock reason
   const lockReasonElement = await page.$(domainDetailSelectors.lockReason);

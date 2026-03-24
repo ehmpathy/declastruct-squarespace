@@ -7,15 +7,19 @@
 #         - collocated files for easy correlation
 #         - enables async debug (snapshot now, analyze later)
 #
+# .pit-of-success:
+#   requires --focused OR (--tab AND --url) to prevent wrong-tab mistakes.
+#   if unsure which tab, run browser.describe first.
+#
+# .important:
+#   --tab N    = ABSOLUTE index (tab 4 means the 4th tab, period)
+#   --url 'x'  = VERIFICATION key (asserts tab N has this URL, fails if not)
+#   --url is NOT a filter; it does NOT search for tabs that match the URL
+#
 # usage:
-#   rhx browser.snapshot --tab 0                   # all assets
-#   rhx browser.snapshot screenshot --tab 0        # just screenshot
-#   rhx browser.snapshot html --tab 0              # just html
-#   rhx browser.snapshot meta --tab 0              # just metadata
-#   rhx browser.snapshot console --tab 0           # just console
-#   rhx browser.snapshot network --tab 0           # just network
-#   rhx browser.snapshot storage --tab 0           # just storage
-#   rhx browser.snapshot --tab 0 --session test1   # specific session
+#   rhx browser.snapshot --focused                                               # snapshot focused tab
+#   rhx browser.snapshot --tab -1 --url 'account.squarespace.com/domains'        # snapshot by index
+#   rhx browser.snapshot screen --focused                                        # just screenshot
 #
 # output:
 #   .cache/browser.$session/snapshot.$isotime.tab$tab/
@@ -29,6 +33,8 @@
 # guarantee:
 #   - auto-discovers browser from state file
 #   - fail-fast if --tab not supplied
+#   - fail-fast if --url not supplied (run browser.describe first)
+#   - fail-fast if tab URL doesn't match --url
 #   - fail-fast if no browser found
 ######################################################################
 
@@ -40,8 +46,10 @@ source "$SCRIPT_DIR/browser.lib.sh"
 # parse args (strips rhachet passthrough flags)
 SUBCOMMAND=""
 TAB_INDEX=""
+EXPECTED_URL=""
 SESSION="default"
 OUTPUT_PREFIX=""
+USE_FOCUSED_TAB=""
 
 while [[ $# -gt 0 ]]; do
   case $1 in
@@ -52,6 +60,8 @@ while [[ $# -gt 0 ]]; do
       ;;
     # known flags
     --tab) TAB_INDEX="$2"; shift 2 ;;
+    --focused) USE_FOCUSED_TAB="true"; shift ;;
+    --url) EXPECTED_URL="$2"; shift 2 ;;
     --session) SESSION="$2"; shift 2 ;;
     --output) OUTPUT_PREFIX="$2"; shift 2 ;;
     # rhachet passthrough args - ignore
@@ -67,20 +77,43 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-# require --tab
-if [[ -z "$TAB_INDEX" ]]; then
-  echo "error: --tab required" >&2
+# require --focused OR (--tab + --url)
+if [[ -z "$TAB_INDEX" && -z "$USE_FOCUSED_TAB" ]]; then
+  echo "error: --focused OR (--tab + --url) required" >&2
   echo "" >&2
   echo "usage:" >&2
-  echo "  rhx browser.snapshot --tab 0              # all assets" >&2
-  echo "  rhx browser.snapshot screenshot --tab 0   # just screenshot" >&2
-  echo "  rhx browser.snapshot html --tab 0         # just html" >&2
+  echo "  rhx browser.snapshot --focused                     # snapshot focused tab" >&2
+  echo "  rhx browser.snapshot --tab 0 --url 'example.com'   # snapshot by index" >&2
   exit 1
 fi
 
 browser_init_session "$SESSION"
 browser_require_endpoint
-browser_validate_tab "$TAB_INDEX"
+
+# if --focused, find the focused tab
+if [[ -n "$USE_FOCUSED_TAB" ]]; then
+  TAB_INDEX=$(browser_find_focused_tab)
+  if [[ -z "$TAB_INDEX" || "$TAB_INDEX" == "-1" ]]; then
+    echo "error: no focused tab found" >&2
+    exit 1
+  fi
+  EXPECTED_URL=$(browser_get_tab_url "$TAB_INDEX")
+else
+  # require --url with --tab
+  if [[ -z "$EXPECTED_URL" ]]; then
+    echo "error: --url required with --tab" >&2
+    echo "" >&2
+    echo "run browser.describe to find the tab:" >&2
+    echo "  rhx browser.describe" >&2
+    echo "" >&2
+    echo "or use --focused:" >&2
+    echo "  rhx browser.snapshot --focused" >&2
+    exit 1
+  fi
+  browser_validate_tab "$TAB_INDEX"
+  browser_verify_tab_url "$TAB_INDEX" "$EXPECTED_URL"
+fi
+
 browser_init_output "$TAB_INDEX"
 
 # export for sub-scripts

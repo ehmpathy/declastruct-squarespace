@@ -1,3 +1,5 @@
+import { DeclastructProvider } from 'declastruct';
+
 import { DeclaredSquarespaceDomainDnsRecordDao } from '../../access/daos/DeclaredSquarespaceDomainDnsRecordDao';
 import { DeclaredSquarespaceDomainRegistrationDao } from '../../access/daos/DeclaredSquarespaceDomainRegistrationDao';
 import { DeclaredSquarespaceDomainTransferRequestDao } from '../../access/daos/DeclaredSquarespaceDomainTransferRequestDao';
@@ -89,24 +91,33 @@ export const getDeclastructSquarespaceProvider = (input: {
     agentOptions,
   };
 
-  // return provider with DAOs and context
-  return {
-    /**
-     * context for direct operation calls
-     */
-    context,
-
-    /**
-     * DAOs for declarative resource management
-     */
-    daos: {
-      DeclaredSquarespaceDomainRegistration:
-        DeclaredSquarespaceDomainRegistrationDao,
-      DeclaredSquarespaceDomainDnsRecord: DeclaredSquarespaceDomainDnsRecordDao,
-      DeclaredSquarespaceDomainTransferRequest:
-        DeclaredSquarespaceDomainTransferRequestDao,
-    },
+  // assemble DAOs for all resource types
+  const daos = {
+    DeclaredSquarespaceDomainRegistration:
+      DeclaredSquarespaceDomainRegistrationDao,
+    DeclaredSquarespaceDomainDnsRecord: DeclaredSquarespaceDomainDnsRecordDao,
+    DeclaredSquarespaceDomainTransferRequest:
+      DeclaredSquarespaceDomainTransferRequestDao,
   };
+
+  // return provider with all required properties
+  return new DeclastructProvider({
+    name: 'squarespace',
+    daos,
+    context,
+    hooks: {
+      beforeAll: async () => {
+        // no-op: browser session is created lazily on first operation
+      },
+      afterAll: async () => {
+        // close browser session to allow process exit
+        // .note - withSimpleCache stores the Promise, not the resolved value
+        const cacheKey = [input.account.id, input.credentials.email].join('.');
+        const browserSession = await agentOptions.browser.cache.get(cacheKey);
+        if (browserSession) await browserSession.close();
+      },
+    },
+  });
 };
 
 /**

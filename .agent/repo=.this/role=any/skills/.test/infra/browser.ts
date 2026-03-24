@@ -6,7 +6,8 @@ import { spawnSync } from 'child_process';
 
 // test cache root (isolated from main .cache)
 export const CACHE_ROOT = '.temp/.cache';
-const env = { CACHE_ROOT };
+// clear BROWSER_WS_ENDPOINT so tests use their own session-based endpoints
+const env = { CACHE_ROOT, BROWSER_WS_ENDPOINT: '' };
 
 // get wsEndpoint file for session
 export const getWsEndpointFile = (session: string) =>

@@ -4,13 +4,17 @@
 #
 # .why  = HAR data for API debug and replay
 #
+# .pit-of-success:
+#   requires both --tab AND --url to prevent wrong-tab mistakes.
+#   if unsure which tab, run browser.describe first.
+#
 # .note = only captures NEW requests after listener attaches.
 #         for extant pages, historical requests are not available.
 #         trigger a page action to capture fresh requests.
 #
 # usage:
-#   rhx browser.snapshot network --tab 0
-#   rhx browser.snapshot network --tab 0 --output .temp/debug
+#   rhx browser.snapshot network --tab -1 --url 'account.squarespace.com/domains'
+#   rhx browser.snapshot network --tab -1 --url 'account.squarespace.com/domains' --output .temp/debug
 #
 # output:
 #   $OUTPUT_PREFIX/snapshot.network.json

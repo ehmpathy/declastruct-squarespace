@@ -3,6 +3,10 @@ import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import util from 'util';
 
+// set NODE_ENV to test mode
+// .why = ensures test mode detection works (e.g., never close pages in test mode)
+process.env.NODE_ENV = 'test';
+
 // eslint-disable-next-line no-undef
 jest.setTimeout(90000); // since we're calling downstream apis
 

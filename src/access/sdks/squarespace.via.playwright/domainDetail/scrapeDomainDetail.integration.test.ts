@@ -62,9 +62,7 @@ describe('scrapeDomainDetail', () => {
 
       then('detail has the correct domain name', async () => {
         const detail: RawDomainDetail = result.detail;
-        expect(detail.name.toLowerCase()).toContain(
-          scene.testDomain.toLowerCase().split('.')[0],
-        );
+        expect(detail.name.toLowerCase()).toBe(scene.testDomain.toLowerCase());
       });
 
       then('detail has a status', async () => {

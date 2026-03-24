@@ -41,8 +41,11 @@ export const authSelectors = {
   // Reauthentication modal/popup
   reauthModal: {
     container: '[data-test="reauth-modal"], [role="dialog"]',
+    iframe: 'iframe[src*="reauthenticate"]',
     passwordInput: 'input[name="password"], input[type="password"]',
-    submitButton: 'button[type="submit"]',
+    totpInput:
+      'input[name="code"], input[placeholder*="XXX"], input[autocomplete="one-time-code"], input[inputmode="numeric"]',
+    submitButton: 'button[type="submit"], button:has-text("Verify")',
     cancelButton: 'button[data-test="cancel"]',
   },
 

@@ -12,7 +12,7 @@ exports[`browser.describe given: [case1] with active browser when: [t0] skill is
    ├─ session: describe-case1
    ├─ tabs: 1
    │
-   └─ [0] New Tab
+   └─ [0] New Tab ← focused
       chrome://new-tab-page/
 "
 `;
@@ -48,7 +48,7 @@ exports[`browser.describe given: [case3] multiple independent sessions when: [t0
    ├─ session: describe-case3a
    ├─ tabs: 1
    │
-   └─ [0] New Tab
+   └─ [0] New Tab ← focused
       chrome://new-tab-page/
 "
 `;
@@ -65,7 +65,7 @@ exports[`browser.describe given: [case3] multiple independent sessions when: [t0
    ├─ session: describe-case3b
    ├─ tabs: 1
    │
-   └─ [0] New Tab
+   └─ [0] New Tab ← focused
       chrome://new-tab-page/
 "
 `;

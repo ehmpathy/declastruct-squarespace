@@ -43,18 +43,18 @@ describe('getDeclastructSquarespaceProvider', () => {
           provider.daos.DeclaredSquarespaceDomainRegistration.get.one.byUnique,
         ).toBeInstanceOf(Function);
         expect(
-          provider.daos.DeclaredSquarespaceDomainRegistration.get.all,
+          provider.daos.DeclaredSquarespaceDomainRegistration.get.one.byRef,
         ).toBeInstanceOf(Function);
         expect(
           provider.daos.DeclaredSquarespaceDomainRegistration.set.upsert,
         ).toBeInstanceOf(Function);
 
-        // dns record DAO (get only - set operations removed per wish scope)
+        // dns record DAO (get only - set operations not supported)
         expect(
           provider.daos.DeclaredSquarespaceDomainDnsRecord.get.one.byUnique,
         ).toBeInstanceOf(Function);
         expect(
-          provider.daos.DeclaredSquarespaceDomainDnsRecord.get.all,
+          provider.daos.DeclaredSquarespaceDomainDnsRecord.get.one.byRef,
         ).toBeInstanceOf(Function);
 
         // transfer request DAO
@@ -63,7 +63,7 @@ describe('getDeclastructSquarespaceProvider', () => {
             .byUnique,
         ).toBeInstanceOf(Function);
         expect(
-          provider.daos.DeclaredSquarespaceDomainTransferRequest.get.all,
+          provider.daos.DeclaredSquarespaceDomainTransferRequest.get.one.byRef,
         ).toBeInstanceOf(Function);
         expect(
           provider.daos.DeclaredSquarespaceDomainTransferRequest.set.findsert,

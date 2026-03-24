@@ -25,11 +25,12 @@ const getBrowserWsEndpoint = (): string | undefined => {
 };
 
 /**
- * .what = factory to create real Squarespace context for integration/acceptance tests
+ * .what = factory to create real Squarespace provider for integration/acceptance tests
  * .why = enables test runs against real Squarespace account
  * .note = requires SQUARESPACE_EMAIL, SQUARESPACE_PASSWORD environment variables
+ * .note = returns full provider so tests can call cleanup via hooks.afterAll()
  */
-export const getSampleSquarespaceContext = () => {
+export const getSampleSquarespaceProvider = () => {
   // fail-fast if credentials not provided
   const email = process.env.SQUARESPACE_EMAIL;
   const password = process.env.SQUARESPACE_PASSWORD;
@@ -60,7 +61,16 @@ export const getSampleSquarespaceContext = () => {
     },
   });
 
-  return provider.context;
+  return provider;
+};
+
+/**
+ * .what = get context for legacy tests
+ * .why = backwards compat for tests that only need context
+ * .deprecated = use getSampleSquarespaceProvider() instead for proper cleanup
+ */
+export const getSampleSquarespaceContext = () => {
+  return getSampleSquarespaceProvider().context;
 };
 
 /**

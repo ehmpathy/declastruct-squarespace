@@ -1,5 +1,6 @@
 import type { Page } from 'playwright';
 
+import { waitForSquarespaceReactRender } from '../navigation/waitForSquarespaceReactRender';
 import { transfersListSelectors } from '../selectors/transfersListSelectors';
 
 /**
@@ -24,8 +25,26 @@ export const scrapeTransferRequests = async (input: {
   const { page } = input;
 
   // navigate to transfers page
-  await page.goto('https://account.squarespace.com/domains/transfers');
-  await page.waitForLoadState('networkidle');
+  const expectedUrl = 'https://account.squarespace.com/domains/transfers';
+  await page.goto(expectedUrl);
+  await page.waitForLoadState('load');
+
+  // wait for React to render (not just body - body has noscript fallback immediately)
+  await waitForSquarespaceReactRender({ page });
+
+  // check URL AFTER content load
+  // .note - squarespace redirects /domains/transfers to /domains when no transfers exist
+  const currentUrl = page.url();
+  console.log('scrapeTransferRequests: final URL =', currentUrl);
+  if (!currentUrl.includes('/domains/transfers')) {
+    // redirect to /domains means no transfers exist
+    if (currentUrl.includes('/domains')) {
+      return [];
+    }
+    throw new Error(
+      `scrapeTransferRequests: URL mismatch. expected /domains/transfers, got ${currentUrl}. squarespace may have redirected.`,
+    );
+  }
 
   // check for empty state
   const emptyStateVisible = await page

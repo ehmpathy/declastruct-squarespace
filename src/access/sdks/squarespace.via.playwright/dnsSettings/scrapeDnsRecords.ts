@@ -1,5 +1,6 @@
 import type { Page } from 'playwright';
 
+import { waitForSquarespaceReactRender } from '../navigation/waitForSquarespaceReactRender';
 import { dnsSettingsSelectors } from '../selectors/dnsSettingsSelectors';
 
 /**
@@ -25,10 +26,31 @@ export const scrapeDnsRecords = async (input: {
   const { page, domain } = input;
 
   // navigate to dns settings page
-  await page.goto(`https://account.squarespace.com/domains/${domain}/dns`);
-  await page.waitForLoadState('networkidle');
+  // .note - use 'load' not 'networkidle' because squarespace SPA has persistent connections
+  // .note - URL pattern is /domains/managed/{domain}/dns/dns-settings (the actual DNS records page)
+  // .note - /domains/managed/{domain}/dns alone redirects to the domains list (invalid route)
+  const expectedUrl = `https://account.squarespace.com/domains/managed/${domain}/dns/dns-settings`;
+  await page.goto(expectedUrl);
+  await page.waitForLoadState('load');
 
-  // wait for container or empty state
+  // wait for React to render shell + DNS record rows
+  await waitForSquarespaceReactRender({
+    page,
+    forContent: '[data-testid="dns-record-row"]',
+  });
+  console.log('scrapeDnsRecords: DNS records table rendered');
+
+  // fail-fast: assert URL AFTER content load
+  // .note - check after content because SPA may redirect post-hydration
+  const currentUrl = page.url();
+  console.log('scrapeDnsRecords: final URL =', currentUrl);
+  if (!currentUrl.includes(`/domains/managed/${domain}/dns/dns-settings`)) {
+    throw new Error(
+      `scrapeDnsRecords: unexpected URL after navigation. expected ${expectedUrl}, got ${currentUrl}. squarespace may have redirected.`,
+    );
+  }
+
+  // check for container or empty state
   const containerVisible = await page
     .$(dnsSettingsSelectors.container)
     .then((el) => el !== null);
@@ -41,10 +63,50 @@ export const scrapeDnsRecords = async (input: {
     return [];
   }
 
-  // wait for records table to load
-  await page.waitForSelector(dnsSettingsSelectors.recordsTable, {
-    timeout: 30000,
-  });
+  // try to find records - if table not found, try alternative selectors
+  const recordsTableFound = await page
+    .$(dnsSettingsSelectors.recordsTable)
+    .then((el) => el !== null);
+
+  console.log('scrapeDnsRecords: recordsTableFound =', recordsTableFound);
+
+  // if no records table found, check for any table or list structure
+  if (!recordsTableFound) {
+    // try alternative selector patterns that might contain DNS records
+    const hasAnyTable = await page.$('table').then((el) => el !== null);
+    const hasRecordsList = await page
+      .$('[class*="record"], [class*="dns"]')
+      .then((el) => el !== null);
+
+    console.log(
+      'scrapeDnsRecords: hasAnyTable =',
+      hasAnyTable,
+      'hasRecordsList =',
+      hasRecordsList,
+    );
+
+    // debug: dump all tables and main content
+    const allTables = await page.$$eval('table', (els) =>
+      els.map((el) => el.outerHTML.slice(0, 500)),
+    );
+    console.log('scrapeDnsRecords: all tables:', allTables);
+
+    // debug: dump main content structure
+    const mainContent = await page
+      .$eval('main', (el) => el.innerHTML.slice(0, 3000))
+      .catch(() => 'no main found');
+    console.log('scrapeDnsRecords: main content preview:', mainContent);
+
+    // if still no structured content, fail fast with debug info
+    if (!hasAnyTable && !hasRecordsList) {
+      // capture page content for debug
+      const bodyText = await page.locator('body').textContent();
+      const truncatedBody = bodyText?.slice(0, 500) ?? '';
+      throw new Error(
+        `scrapeDnsRecords: no DNS records structure found on page. URL=${currentUrl}. body preview: ${truncatedBody}`,
+      );
+    }
+  }
 
   // scrape all record rows
   const recordRows = await page.$$(dnsSettingsSelectors.recordRow);
