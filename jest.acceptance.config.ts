@@ -9,6 +9,10 @@ process.env.TZ = 'UTC';
 // ensure tests run like on local machines, so snapshots are equal on local && cicd
 process.env.FORCE_COLOR = 'true';
 
+// todo: setup proxy and browser on cicd to enable acceptance tests
+// for now, skip all acceptance tests in CI (they require browser + squarespace credentials)
+const SKIP_IN_CI = Boolean(process.env.CI);
+
 // https://jestjs.io/docs/configuration
 const config: Config = {
   verbose: true,
@@ -24,7 +28,7 @@ const config: Config = {
     // here's an example of how to ignore esm module transformation, when needed
     // 'node_modules/(?!(@octokit|universal-user-agent|before-after-hook)/)',
   ],
-  testMatch: ['**/*.acceptance.test.ts', '!**/.yalc/**'],
+  testMatch: SKIP_IN_CI ? [] : ['**/*.acceptance.test.ts', '!**/.yalc/**'],
   setupFilesAfterEnv: ['./jest.acceptance.env.ts'],
 
   // use 50% of threads to leave headroom for other processes
