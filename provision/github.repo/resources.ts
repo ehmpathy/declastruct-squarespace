@@ -22,8 +22,8 @@ export const getProviders = async (): Promise<DeclastructProvider[]> => [
     },
     {
       log: {
-        info: () => { },
-        debug: () => { },
+        info: () => {},
+        debug: () => {},
         warn: console.warn,
         error: console.error,
       },

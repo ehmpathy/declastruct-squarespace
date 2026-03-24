@@ -3,6 +3,10 @@ import { existsSync, readFileSync } from 'fs';
 import { join } from 'path';
 import util from 'util';
 
+// set NODE_ENV to test mode
+// .why = ensures test mode detection works (e.g., never close pages in test mode)
+process.env.NODE_ENV = 'test';
+
 // eslint-disable-next-line no-undef
 jest.setTimeout(90000); // since we're calling downstream apis
 
@@ -31,20 +35,56 @@ if (
   throw new Error(`integration.test is not targeting stage 'test'`);
 
 /**
- * sanity check that AWS credentials are available for integration tests
- *
- * usecases
- * - prevent silent test failures due to missing credentials
- * - provide clear instructions on how to set up credentials
- *
- * supports
- * - AWS_PROFILE: local dev via ~/.aws/config profiles
- * - AWS_ACCESS_KEY_ID: CI/CD via OIDC or IAM credentials
+ * .what = fetch squarespace credentials from keyrack
+ * .why = tests require real credentials; keyrack provides secure access
+ * .note = must unlock before get for ehmpath owner
  */
-if (!(process.env.AWS_PROFILE || process.env.AWS_ACCESS_KEY_ID))
-  throw new Error(
-    'AWS credentials not set. Run w/ creds via `source .agent/repo=.this/skills/use.demo.awsprofile.sh && npm run test:integration`',
-  );
+const fetchKeyFromKeyrack = (key: string): string | null => {
+  try {
+    // unlock ehmpath keyrack first (requires prikey)
+    execSync(
+      `npx rhx keyrack unlock --owner ehmpath --prikey ~/.ssh/ehmpath --key ${key} --env test`,
+      { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] },
+    );
+
+    // now get the key
+    const result = execSync(
+      `npx rhx keyrack get --owner ehmpath --key ${key} --env test --json`,
+      { encoding: 'utf-8', stdio: ['pipe', 'pipe', 'pipe'] },
+    );
+    const parsed = JSON.parse(result);
+    return parsed.grant?.key?.secret ?? null;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * .what = auto-discover persistent browser via state file
+ * .why = browser.start skill writes wsEndpoint to file for tests to find
+ * .note = uses session-based path: .cache/browser.$session/ws-endpoint
+ */
+if (!process.env.BROWSER_WS_ENDPOINT) {
+  const wsEndpointFile = join(process.cwd(), '.cache/browser.default/ws-endpoint');
+  if (existsSync(wsEndpointFile)) {
+    process.env.BROWSER_WS_ENDPOINT = readFileSync(wsEndpointFile, 'utf-8').trim();
+    console.log('auto-discovered browser at:', process.env.BROWSER_WS_ENDPOINT);
+  }
+}
+
+// fetch squarespace credentials from keyrack (if not already in env)
+if (!process.env.SQUARESPACE_EMAIL) {
+  const email = fetchKeyFromKeyrack('SQUARESPACE_EMAIL');
+  if (email) process.env.SQUARESPACE_EMAIL = email;
+}
+if (!process.env.SQUARESPACE_PASSWORD) {
+  const password = fetchKeyFromKeyrack('SQUARESPACE_PASSWORD');
+  if (password) process.env.SQUARESPACE_PASSWORD = password;
+}
+if (!process.env.SQUARESPACE_TOTP_SECRET) {
+  const totpSecret = fetchKeyFromKeyrack('SQUARESPACE_TOTP_SECRET');
+  if (totpSecret) process.env.SQUARESPACE_TOTP_SECRET = totpSecret;
+}
 
 /**
  * .what = verify that the env has sufficient auth to run the tests if aws is used; otherwise, fail fast

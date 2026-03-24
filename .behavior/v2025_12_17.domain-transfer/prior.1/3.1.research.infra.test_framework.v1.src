@@ -1,0 +1,34 @@
+research the infra patterns and techniques declared below that will support the fulfillment of
+- .behavior/v2025_12_17.domain-transfer/0.wish.md
+- .behavior/v2025_12_17.domain-transfer/1.vision.md
+
+along with the context from on our research in
+- .behavior/v2025_12_17.domain-transfer/3.1.research.domain._.v1.i1.md
+
+emit into
+- .behavior/v2025_12_17.domain-transfer/3.1.research.infra.test_framework.v1.i1.md
+
+---
+
+specifically, focus on the infra patterns and techniques that will facilitate
+
+- a rapid feedback loop
+- via a test framework
+
+
+---
+
+how will we enable any agent (robot:claude, human:collaborator, etc)
+
+to rapidly run
+- integration tests, on boundaries, to test the integration of boundary components against remote dependencies
+- integration tests, on composites, to test the integration of combined components against end-to-end procedures
+
+- acceptance tests, that will prove the behavior declared in wish, vision, and criteria is fulfilled
+
+---
+
+additionally, zoomin and articulate the difference, if any, in how
+- agents like robot:claude via claude-code have to interface
+vs
+- agents like human:author via vscode or terminal have to interface

@@ -1,0 +1,58 @@
+# guard for criteria stone
+#
+# requires human approval before stone can be marked as passed
+# because the self-review prompts require human feedback,
+# the process needs to halt here for human review
+
+judges:
+  - npx rhachet run --repo bhrain --skill route.stone.judge --mechanism approved? --stone $stone --route $route
+
+reviews:
+  self:
+    - slug: has-questioned-requirements
+      say: |
+        are any criteria unnecessary or misdirected?
+
+        for each criterion, ask:
+        - who said this was needed? when? why?
+        - what if we removed this criterion — what would break?
+        - is this criterion scope too large or too small?
+        - could we test the same behavior more simply?
+
+        challenge each criterion and justify why it belongs.
+
+    - slug: has-questioned-devils-advocate
+      say: |
+        argue against each criterion — play devil's advocate:
+
+        for each criterion, ask:
+        - why might this criterion be wrong?
+        - what would someone who disagrees say?
+        - is this criterion too strict? too loose?
+        - does this criterion test the correct behavior?
+
+        expose weak criteria before they mislead us.
+
+    - slug: has-questioned-counterexamples
+      say: |
+        hunt for counterexamples that break each criterion:
+
+        for each criterion, ask:
+        - what edge case would pass this criterion but fail the vision?
+        - what edge case would fail this criterion but fulfill the vision?
+        - what inputs did we not consider?
+        - what user scenarios did we miss?
+
+        ensure criteria are robust against edge cases.
+
+    - slug: has-questioned-5whys
+      say: |
+        for each criterion, drill deep with 5 whys:
+
+        1. why do we need this criterion? → because...
+        2. why? → because...
+        3. why? → because...
+        4. why? → because...
+        5. why? → because...
+
+        ensure we understand the root needs these criteria serve.

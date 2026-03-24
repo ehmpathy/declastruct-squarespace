@@ -9,6 +9,10 @@ process.env.TZ = 'UTC';
 // ensure tests run like on local machines, so snapshots are equal on local && cicd
 process.env.FORCE_COLOR = 'true';
 
+// todo: setup proxy and browser on cicd to enable integration tests
+// for now, skip all integration tests in CI (they require browser + squarespace credentials)
+const SKIP_IN_CI = Boolean(process.env.CI);
+
 // https://jestjs.io/docs/configuration
 const config: Config = {
   verbose: true,
@@ -24,11 +28,14 @@ const config: Config = {
     // here's an example of how to ignore esm module transformation, when needed
     // 'node_modules/(?!(@octokit|universal-user-agent|before-after-hook)/)',
   ],
-  testMatch: ['**/*.integration.test.ts', '!**/.yalc/**'],
+  testMatch: SKIP_IN_CI
+    ? ['**/__never_match__/**']
+    : ['**/*.integration.test.ts', '!**/.yalc/**'],
   setupFilesAfterEnv: ['./jest.integration.env.ts'],
 
-  // use 50% of threads to leave headroom for other processes
-  maxWorkers: '50%', // https://stackoverflow.com/questions/71287710/why-does-jest-run-faster-with-maxworkers-50
+  // run sequentially to avoid bot detection against squarespace
+  // parallel requests would trigger rate limits and captchas
+  maxWorkers: 1,
 };
 
 // eslint-disable-next-line import/no-default-export
