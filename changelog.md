@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.0](https://github.com/ehmpathy/declastruct-squarespace/compare/v0.1.0...v0.2.0) (2026-04-06)
+
+
+### Features
+
+* **nameservers:** add declarative nameserver control ([#3](https://github.com/ehmpathy/declastruct-squarespace/issues/3)) ([34c953b](https://github.com/ehmpathy/declastruct-squarespace/commit/34c953be3993bf9444a0e7303e8033d7493f8477))
+
 ## 0.1.0 (2026-03-24)
 
 
