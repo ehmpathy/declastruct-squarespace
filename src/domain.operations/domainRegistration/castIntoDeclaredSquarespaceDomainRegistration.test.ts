@@ -52,11 +52,6 @@ describe('castIntoDeclaredSquarespaceDomainRegistration', () => {
         expect(result.lockReason).toBeNull();
       });
 
-      then('autoRenew defaults to false', () => {
-        const result = castIntoDeclaredSquarespaceDomainRegistration({ raw });
-        expect(result.autoRenew).toEqual(false);
-      });
-
       then('dnssecEnabled defaults to false', () => {
         const result = castIntoDeclaredSquarespaceDomainRegistration({ raw });
         expect(result.dnssecEnabled).toEqual(false);
@@ -171,15 +166,7 @@ describe('castIntoDeclaredSquarespaceDomainRegistration', () => {
       nameservers: [],
     };
 
-    when('autoRenew and dnssecEnabled are explicitly set', () => {
-      then('autoRenew is respected', () => {
-        const result = castIntoDeclaredSquarespaceDomainRegistration({
-          raw,
-          autoRenew: true,
-        });
-        expect(result.autoRenew).toEqual(true);
-      });
-
+    when('dnssecEnabled and createdAt are explicitly set', () => {
       then('dnssecEnabled is respected', () => {
         const result = castIntoDeclaredSquarespaceDomainRegistration({
           raw,

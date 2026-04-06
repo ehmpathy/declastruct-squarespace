@@ -114,9 +114,9 @@ const parseExpirationDate = (input: {
  */
 export const castIntoDeclaredSquarespaceDomainRegistration = (input: {
   raw: RawDomainDetail;
-  autoRenew?: boolean;
   dnssecEnabled?: boolean;
   createdAt?: string | null;
+  renewal?: 'ENABLED' | 'DISABLED';
 }): DeclaredSquarespaceDomainRegistration => {
   // parse status
   const status = parseStatus({ status: input.raw.status });
@@ -140,8 +140,8 @@ export const castIntoDeclaredSquarespaceDomainRegistration = (input: {
     lockReason,
     registrar,
     expirationDate,
-    autoRenew: input.autoRenew ?? false,
     dnssecEnabled: input.dnssecEnabled ?? false,
     createdAt: input.createdAt ?? null,
+    renewal: input.renewal ?? 'DISABLED',
   });
 };

@@ -7,6 +7,7 @@ export type DeclaredSquarespaceDomainDnsRecordType =
   | 'AAAA'
   | 'ALIAS'
   | 'CNAME'
+  | 'HTTPS'
   | 'MX'
   | 'TXT'
   | 'SRV'

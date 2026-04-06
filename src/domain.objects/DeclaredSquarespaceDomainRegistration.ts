@@ -47,12 +47,6 @@ export interface DeclaredSquarespaceDomainRegistration {
   expirationDate: string; // ISO date string
 
   /**
-   * .what - Whether auto-renewal is enabled
-   * .why - Informational
-   */
-  autoRenew: boolean;
-
-  /**
    * .what - Whether DNSSEC is enabled
    * .why - Must be disabled before transfer
    */
@@ -63,6 +57,12 @@ export interface DeclaredSquarespaceDomainRegistration {
    * .why - Used to determine if 60-day lock applies
    */
   createdAt: string | null; // ISO date string, readonly
+
+  /**
+   * .what - Whether auto-renewal is enabled for this domain
+   * .why - Determines if domain will auto-renew or expire at expiration date
+   */
+  renewal: 'ENABLED' | 'DISABLED';
 }
 
 export class DeclaredSquarespaceDomainRegistration extends DomainEntity<DeclaredSquarespaceDomainRegistration> {
@@ -74,5 +74,6 @@ export class DeclaredSquarespaceDomainRegistration extends DomainEntity<Declared
     'registrar',
     'status',
     'lockReason',
+    'renewal',
   ] as const;
 }

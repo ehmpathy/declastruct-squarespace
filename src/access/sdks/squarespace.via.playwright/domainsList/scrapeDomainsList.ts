@@ -6,12 +6,13 @@ import { scrollToLoadAllDomains } from './scrollToLoadAllDomains';
 
 /**
  * .what = raw domain data scraped from the domains list page
- * .why = pre-cast shape before transforming to domain object
+ * .why = pre-cast shape before transform to domain object
  */
 export interface RawDomainListItem {
   name: string;
   status: string;
   expiryText: string | null;
+  hasRenewalIndicator: boolean;
 }
 
 /**
@@ -32,8 +33,13 @@ export const scrapeDomainsList = async (input: {
     await page.goto('https://account.squarespace.com/domains');
     await page.waitForLoadState('load');
 
-    // wait for React to render (not just body - body has noscript fallback immediately)
-    await waitForSquarespaceReactRender({ page });
+    // wait for React to render content (not just shell - shell has noscript fallback)
+    // .note = use forContent to wait for actual domain rows or empty state
+    //         60s default timeout is needed for slow initial renders
+    await waitForSquarespaceReactRender({
+      page,
+      forContent: `${domainsListSelectors.domainRow}, ${domainsListSelectors.emptyState}`,
+    });
 
     // fail-fast: assert URL AFTER content load
     // .note - check after content because SPA may redirect post-hydration
@@ -47,25 +53,6 @@ export const scrapeDomainsList = async (input: {
         `scrapeDomainsList: URL mismatch. expected /domains (not /domains/managed/), got ${settledUrl}. squarespace may have redirected.`,
       );
     }
-  }
-
-  // wait for page content (domain table or empty state)
-  // .note = fail-fast if neither selector appears in time
-  const contentAppeared = await Promise.race([
-    page
-      .waitForSelector(domainsListSelectors.domainRow, { timeout: 15000 })
-      .then(() => true),
-    page
-      .waitForSelector(domainsListSelectors.emptyState, { timeout: 15000 })
-      .then(() => true),
-  ]).catch(() => false);
-
-  if (!contentAppeared) {
-    const bodyText = await page.locator('body').textContent();
-    throw new Error(
-      `scrapeDomainsList: no domain content found. ` +
-        `url=${page.url()}, bodyPreview=${bodyText?.slice(0, 500)}`,
-    );
   }
 
   // check for empty state
@@ -97,10 +84,15 @@ export const scrapeDomainsList = async (input: {
     const expiryElement = await row.$(domainsListSelectors.domainExpiry);
     const expiryText = expiryElement ? await expiryElement.textContent() : null;
 
+    // detect renewal indicator (refresh icon with renews-tooltip)
+    const renewalIndicator = await row.$(domainsListSelectors.renewalIndicator);
+    const hasRenewalIndicator = renewalIndicator !== null;
+
     domains.push({
       name: name.trim(),
       status: (status ?? 'unknown').trim(),
       expiryText: expiryText?.trim() ?? null,
+      hasRenewalIndicator,
     });
   }
 

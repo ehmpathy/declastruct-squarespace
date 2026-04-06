@@ -1,0 +1,27 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`setNameserversScraper given: a logged-in browser session when: called for non-extant domain then: full result matches snapshot 1`] = `null`;
+
+exports[`setNameserversScraper given: a logged-in browser session when: called for non-extant domain then: error matches snapshot 1`] = `
+{
+  "errorMessage": "waitForSquarespaceReactRender: content did not render within 60000ms. selector=h2:has-text("Domain Nameservers"), [data-testid="nameservers"]. body preview: ",
+  "errorName": "Error",
+}
+`;
+
+exports[`setNameserversScraper given: a logged-in browser session when: custom nameservers are set then: full result matches snapshot 1`] = `
+{
+  "nameservers": [
+    "ns1.cloudflare.com",
+    "ns2.cloudflare.com",
+  ],
+  "success": true,
+}
+`;
+
+exports[`setNameserversScraper given: a logged-in browser session when: reset to squarespace default then: full result matches snapshot 1`] = `
+{
+  "nameservers": null,
+  "success": true,
+}
+`;

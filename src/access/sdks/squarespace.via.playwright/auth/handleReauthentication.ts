@@ -99,10 +99,14 @@ export const handleReauthentication = async (
         page,
         frame: { name: 'reauth-totp-filled' },
       });
-      // .note - use force:true to bypass overlay element that intercepts pointer events
-      await reauthIframe
-        .locator(authSelectors.reauthModal.submitButton)
-        .click({ force: true });
+      // .note - use evaluate to dispatch click event directly (bypasses all viewport checks)
+      // .note - required because iframe may be offset such that button is outside page viewport
+      const totpSubmitButton = reauthIframe.locator(
+        authSelectors.reauthModal.submitButton,
+      );
+      await totpSubmitButton.evaluate((el) =>
+        (el as HTMLButtonElement).click(),
+      );
       await emitBrowserMovieFrame({
         page,
         frame: { name: 'reauth-totp-submitted' },
@@ -152,10 +156,14 @@ export const handleReauthentication = async (
         page,
         frame: { name: 'reauth-password-filled' },
       });
-      // .note - use force:true to bypass overlay element that intercepts pointer events
-      await reauthIframe
-        .locator(authSelectors.reauthModal.submitButton)
-        .click({ force: true });
+      // .note - use evaluate to dispatch click event directly (bypasses all viewport checks)
+      // .note - required because iframe may be offset such that button is outside page viewport
+      const passwordSubmitButton = reauthIframe.locator(
+        authSelectors.reauthModal.submitButton,
+      );
+      await passwordSubmitButton.evaluate((el) =>
+        (el as HTMLButtonElement).click(),
+      );
       await emitBrowserMovieFrame({
         page,
         frame: { name: 'reauth-password-submitted' },
