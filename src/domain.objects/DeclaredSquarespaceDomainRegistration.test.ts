@@ -12,9 +12,9 @@ describe('DeclaredSquarespaceDomainRegistration', () => {
         lockReason: null,
         registrar: 'SQUARESPACE_DOMAINS_LLC',
         expirationDate: '2025-12-31T00:00:00.000Z',
-        autoRenew: true,
         dnssecEnabled: false,
         createdAt: '2023-01-15T00:00:00.000Z',
+        renewal: 'ENABLED',
       });
 
       then('creates a valid domain object', () => {
@@ -35,9 +35,9 @@ describe('DeclaredSquarespaceDomainRegistration', () => {
         lockReason: 'REGISTRATION_LOCK_60_DAY',
         registrar: 'TUCOWS',
         expirationDate: '2026-06-15T00:00:00.000Z',
-        autoRenew: false,
         dnssecEnabled: true,
         createdAt: '2024-12-01T00:00:00.000Z',
+        renewal: 'DISABLED',
       });
 
       then('lock reason is captured', () => {

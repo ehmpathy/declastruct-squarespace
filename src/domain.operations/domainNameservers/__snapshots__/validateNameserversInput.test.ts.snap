@@ -1,0 +1,50 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`validateNameserversInput given: [case1] valid nameservers when: 2 nameservers then: result matches snapshot 1`] = `
+[
+  "ns1.cloudflare.com",
+  "ns2.cloudflare.com",
+]
+`;
+
+exports[`validateNameserversInput given: [case2] fewer than 2 nameservers when: 1 nameserver then: error message matches snapshot 1`] = `
+"BadRequestError: nameservers must have at least 2 entries
+
+{
+  "count": 1,
+  "nameservers": [
+    "ns1.cloudflare.com"
+  ]
+}"
+`;
+
+exports[`validateNameserversInput given: [case3] invalid FQDN format when: nameserver starts with hyphen then: error message matches snapshot 1`] = `
+"BadRequestError: invalid nameserver format: -invalid.com
+
+{
+  "nameserver": "-invalid.com",
+  "hint": "nameserver must be a valid fully qualified domain name"
+}"
+`;
+
+exports[`validateNameserversInput given: [case3] invalid FQDN format when: nameserver with invalid characters then: error message matches snapshot 1`] = `
+"BadRequestError: invalid nameserver format: invalid_ns!.com
+
+{
+  "nameserver": "invalid_ns!.com",
+  "hint": "nameserver must be a valid fully qualified domain name"
+}"
+`;
+
+exports[`validateNameserversInput given: [case4] empty array when: nameservers is empty array then: result matches snapshot 1`] = `null`;
+
+exports[`validateNameserversInput given: [case4] empty array when: nameservers is null then: result matches snapshot 1`] = `null`;
+
+exports[`validateNameserversInput given: [case5] more than 13 nameservers when: 14 nameservers then: error message matches snapshot 1`] = `
+"BadRequestError: nameservers cannot exceed 13 entries
+
+{
+  "count": 14,
+  "hint": "RFC 1035 limits NS records to 13"
+}"
+`;

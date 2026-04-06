@@ -1,0 +1,49 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`setNameservers given: [case1] domain with squarespace default nameservers when: [t0] before any changes then: full entity matches snapshot (null case) 1`] = `
+DeclaredSquarespaceDomainNameservers {
+  "domain": DomainLiteral {
+    "name": "sunshineoceansurferturtles.com",
+  },
+  "nameservers": null,
+}
+`;
+
+exports[`setNameservers given: [case1] domain with squarespace default nameservers when: [t1] setNameservers upsert to cloudflare then: full entity matches snapshot (custom case) 1`] = `
+DeclaredSquarespaceDomainNameservers {
+  "domain": DomainLiteral {
+    "name": "sunshineoceansurferturtles.com",
+  },
+  "nameservers": [
+    "ns1.cloudflare.com",
+    "ns2.cloudflare.com",
+  ],
+}
+`;
+
+exports[`setNameservers given: [case4] validation errors when: [t0] fewer than 2 nameservers then: full result matches snapshot 1`] = `null`;
+
+exports[`setNameservers given: [case4] validation errors when: [t0] fewer than 2 nameservers then: error matches snapshot 1`] = `
+{
+  "errorMessage": "nameservers must have at least 2 entries",
+  "errorName": "BadRequestError",
+}
+`;
+
+exports[`setNameservers given: [case4] validation errors when: [t1] invalid FQDN format then: full result matches snapshot 1`] = `null`;
+
+exports[`setNameservers given: [case4] validation errors when: [t1] invalid FQDN format then: error matches snapshot 1`] = `
+{
+  "errorMessage": "invalid nameserver format: not-a-valid-fqdn",
+  "errorName": "BadRequestError",
+}
+`;
+
+exports[`setNameservers given: [case4] validation errors when: [t2] more than 13 nameservers then: full result matches snapshot 1`] = `null`;
+
+exports[`setNameservers given: [case4] validation errors when: [t2] more than 13 nameservers then: error matches snapshot 1`] = `
+{
+  "errorMessage": "nameservers cannot exceed 13 entries",
+  "errorName": "BadRequestError",
+}
+`;

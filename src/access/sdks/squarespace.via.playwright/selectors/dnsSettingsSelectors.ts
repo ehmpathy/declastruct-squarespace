@@ -13,10 +13,11 @@ export const dnsSettingsSelectors = {
   recordsTable: 'table',
   recordRow: '[data-testid="dns-record-row"], tr[data-testid]',
 
-  // record row cells (by position: Host, Type, Priority, TTL, Data)
+  // record row cells (by position: Type, Host, Priority, TTL, Data)
   // .note - use td:nth-child(N) since cells don't have data-testid
-  recordHost: 'td:nth-child(1)',
-  recordType: 'td:nth-child(2)',
+  // .note - column order changed from Host,Type to Type,Host (2024/2025)
+  recordType: 'td:nth-child(1)',
+  recordHost: 'td:nth-child(2)',
   recordPriority: 'td:nth-child(3)',
   recordTtl: 'td:nth-child(4)',
   recordValue: 'td:nth-child(5)',

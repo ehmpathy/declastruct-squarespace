@@ -22,11 +22,34 @@ export const domainDetailSelectors = {
   lockReason: '[data-testid="lock-reason"], .lock-reason',
 
   // nameservers section
-  nameserversSection: '[data-testid="nameservers"], .nameservers-section',
-  nameserverRow: '[data-testid="nameserver-row"], .nameserver-row',
-  nameserverValue: '[data-testid="nameserver-value"], .nameserver-value',
+  // .note = nameservers page has h2 "Domain Nameservers" and list of NS values
+  // .note = ul with nameserver list is adjacent to div with h2
+  // .note = each nameserver is in li > div > div > p structure
+  // .note = sidebar nav (sticky-nav-container) has similar structure, must filter in code
+  nameserversSection:
+    'h2:has-text("Domain Nameservers"), [data-testid="nameservers"]',
+  nameserverRow: 'ul li:has(div div p)',
+  nameserverValue: 'ul li div div p',
   editNameserversButton:
-    '[data-testid="edit-nameservers"], button[aria-label*="Edit nameservers"]',
+    'button:has-text("Use custom nameservers"), button:has-text("Update Nameservers"), [data-testid="edit-nameservers"]',
+
+  // nameserver edit modal
+  // .note = modal appears after edit button click; contains custom NS inputs
+  nameserverEditModal: '[role="dialog"], [data-testid="nameserver-edit-modal"]',
+  customNameserverInputs:
+    '[role="dialog"] input[type="text"], [data-testid="custom-nameserver-input"], [role="dialog"] input[name*="nameserver"]',
+  saveNameserversButton:
+    '[role="dialog"] button:has-text("Save"), [role="dialog"] button:has-text("SAVE"), [data-testid="save-nameservers"]',
+  // page-level button to reset to squarespace nameservers (NOT in modal)
+  useSquarespaceNameserversButton:
+    'button:has-text("Use Squarespace nameservers"), [data-testid="use-squarespace-nameservers"]',
+
+  // reset nameservers confirmation dialog
+  // .note = appears after click on "Use Squarespace nameservers" when custom NS are set
+  resetNameserversConfirmModal:
+    '[role="dialog"]:has-text("custom nameservers will be discarded"), [role="alertdialog"]:has-text("custom nameservers")',
+  resetNameserversConfirmButton:
+    '[role="dialog"] button:has-text("CONTINUE"), [role="alertdialog"] button:has-text("CONTINUE")',
 
   // whois section
   whoisSection: '[data-testid="whois"], .whois-section',
@@ -58,9 +81,18 @@ export const domainDetailSelectors = {
     '[role="dialog"]:has-text("Transfer authorization code sent"), [role="alertdialog"]:has-text("Transfer authorization code sent")',
   transferCodeSuccessText: 'text="Transfer authorization code sent"',
   transferCodeOkButton:
-    '[role="dialog"] button:has-text("OK"), [role="alertdialog"] button:has-text("OK"), button:has-text("OK")',
+    '[role="dialog"] button:has-text("OK"), [role="alertdialog"] button:has-text("OK"), [role="dialog"] button:has-text("Got it"), [role="dialog"] button:has-text("GOT IT"), [role="dialog"] button:has-text("Done"), [role="dialog"] button:has-text("DONE"), button:has-text("OK")',
   transferCodeSendButton:
     '[data-testid="sendauthcode-button"], button:has-text("SEND AUTH CODE"), button:has-text("Send auth code")',
+
+  // renewal toggle
+  // .note = auto-renew toggle is in the domain overview page, under "Renews On" section
+  renewalToggleInput: 'input[aria-labelledby="auto-renew-toggle-label"]',
+  renewalToggleLabel: '#auto-renew-toggle-label',
+  renewalConfirmButton:
+    '[data-testid="confirm-btn"], button:has-text("CONFIRM"), button:has-text("Confirm")',
+  renewalConfirmModal:
+    '[role="dialog"]:has-text("renewal"), [role="dialog"]:has-text("auto-renew"), [role="alertdialog"]:has-text("renewal")',
 
   // load states (external API requirement)
   loadingSpinner: '[data-testid="loading"], .loading-spinner',

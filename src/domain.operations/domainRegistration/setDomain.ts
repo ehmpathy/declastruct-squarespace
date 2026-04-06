@@ -4,6 +4,7 @@ import type { PickOne } from 'type-fns';
 import { scrapeDomainDetail } from '../../access/sdks/squarespace.via.playwright/domainDetail/scrapeDomainDetail';
 import { toggleDnssec } from '../../access/sdks/squarespace.via.playwright/domainDetail/toggleDnssec';
 import { toggleDomainLock } from '../../access/sdks/squarespace.via.playwright/domainDetail/toggleDomainLock';
+import { toggleRenewal } from '../../access/sdks/squarespace.via.playwright/domainDetail/toggleRenewal';
 import { withNewLoggedInBrowserPage } from '../../access/sdks/squarespace.via.playwright/wrappers/withNewLoggedInBrowserPage';
 import type {
   ContextSquarespaceAgent,
@@ -17,11 +18,17 @@ import { addTriggerToGetAllDomains, getAllDomains } from './getAllDomains';
 type SetDomainInput = PickOne<{
   findsert: Pick<DeclaredSquarespaceDomainRegistration, 'name'> &
     Partial<
-      Pick<DeclaredSquarespaceDomainRegistration, 'isLocked' | 'dnssecEnabled'>
+      Pick<
+        DeclaredSquarespaceDomainRegistration,
+        'isLocked' | 'dnssecEnabled' | 'renewal'
+      >
     >;
   upsert: Pick<DeclaredSquarespaceDomainRegistration, 'name'> &
     Partial<
-      Pick<DeclaredSquarespaceDomainRegistration, 'isLocked' | 'dnssecEnabled'>
+      Pick<
+        DeclaredSquarespaceDomainRegistration,
+        'isLocked' | 'dnssecEnabled' | 'renewal'
+      >
     >;
 }>;
 
@@ -102,6 +109,29 @@ const setDomainCore = async (
     );
   }
 
+  // handle renewal change
+  if (
+    domainDesired.renewal !== undefined &&
+    domainDesired.renewal !== domainFound.renewal
+  ) {
+    const renewalResult = await toggleRenewal({
+      page,
+      domain: domainDesired.name,
+      targetState: domainDesired.renewal,
+      credentials: agentOptions.credentials,
+    });
+
+    if (!renewalResult.success) {
+      throw new BadRequestError('failed to toggle renewal', {
+        domain: domainDesired.name,
+        targetState: domainDesired.renewal,
+        result: renewalResult,
+      });
+    }
+
+    changes.push(`renewal: ${domainFound.renewal} -> ${domainDesired.renewal}`);
+  }
+
   // if no changes were made, return current state
   if (changes.length === 0) {
     return domainFound;
@@ -116,9 +146,9 @@ const setDomainCore = async (
   // cast and return updated domain
   return castIntoDeclaredSquarespaceDomainRegistration({
     raw: detailAfter,
-    autoRenew: domainFound.autoRenew,
     dnssecEnabled: domainDesired.dnssecEnabled ?? domainFound.dnssecEnabled,
     createdAt: domainFound.createdAt,
+    renewal: domainDesired.renewal ?? domainFound.renewal,
   });
 };
 
@@ -158,8 +188,11 @@ const setDomainWithPage = async (
     const noDnssecChange =
       input.findsert.dnssecEnabled === undefined ||
       input.findsert.dnssecEnabled === domainFound.dnssecEnabled;
+    const noRenewalChange =
+      input.findsert.renewal === undefined ||
+      input.findsert.renewal === domainFound.renewal;
 
-    if (noLockChange && noDnssecChange) {
+    if (noLockChange && noDnssecChange && noRenewalChange) {
       return domainFound;
     }
   }
@@ -194,7 +227,7 @@ addTriggerToGetAllDomains({
 });
 
 /**
- * .what = sets domain configuration (lock status, dnssec)
+ * .what = sets domain configuration (lock status, dnssec, renewal)
  * .why = enables domain transfer preparation via declarative interface
  */
 export const setDomain = setDomainMutation.execute;

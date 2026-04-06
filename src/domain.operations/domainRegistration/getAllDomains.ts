@@ -29,8 +29,10 @@ const getAllDomainsFromPage = async (
     });
 
     // cast to domain object
+    // .note = renewal is scraped from list page (refresh icon), not detail page
     const domainRegistration = castIntoDeclaredSquarespaceDomainRegistration({
       raw: detail,
+      renewal: listItem.hasRenewalIndicator ? 'ENABLED' : 'DISABLED',
     });
 
     domains.push(domainRegistration);

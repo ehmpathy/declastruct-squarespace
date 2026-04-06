@@ -39,6 +39,13 @@ export const domainsListSelectors = {
   domainExpiry: 'td:last-child p',
 
   /**
+   * .what - renewal indicator icon in expiration column
+   * .why - detect auto-renewal status from list page
+   * .note - circular refresh icon with aria-describedby that includes "renews-tooltip"
+   */
+  renewalIndicator: 'button[aria-describedby*="renews-tooltip"]',
+
+  /**
    * .what - load indicator
    * .why - wait for content to finish load
    */

@@ -1,6 +1,7 @@
 import { DeclastructProvider } from 'declastruct';
 
 import { DeclaredSquarespaceDomainDnsRecordDao } from '../../access/daos/DeclaredSquarespaceDomainDnsRecordDao';
+import { DeclaredSquarespaceDomainNameserversDao } from '../../access/daos/DeclaredSquarespaceDomainNameserversDao';
 import { DeclaredSquarespaceDomainRegistrationDao } from '../../access/daos/DeclaredSquarespaceDomainRegistrationDao';
 import { DeclaredSquarespaceDomainTransferRequestDao } from '../../access/daos/DeclaredSquarespaceDomainTransferRequestDao';
 import { getSquarespaceAgentOptions } from '../../access/sdks/squarespace.via.playwright/getSquarespaceAgentOptions';
@@ -96,6 +97,8 @@ export const getDeclastructSquarespaceProvider = (input: {
     DeclaredSquarespaceDomainRegistration:
       DeclaredSquarespaceDomainRegistrationDao,
     DeclaredSquarespaceDomainDnsRecord: DeclaredSquarespaceDomainDnsRecordDao,
+    DeclaredSquarespaceDomainNameservers:
+      DeclaredSquarespaceDomainNameserversDao,
     DeclaredSquarespaceDomainTransferRequest:
       DeclaredSquarespaceDomainTransferRequestDao,
   };

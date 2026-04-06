@@ -1,0 +1,19 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`getNameservers given: a Squarespace account with domains when: getNameservers is called for extant domain then: full entity matches snapshot 1`] = `
+DeclaredSquarespaceDomainNameservers {
+  "domain": DomainLiteral {
+    "name": "sunshineoceansurferturtles.com",
+  },
+  "nameservers": null,
+}
+`;
+
+exports[`getNameservers given: a Squarespace account with domains when: getNameservers is called for non-extant domain then: full result matches snapshot 1`] = `null`;
+
+exports[`getNameservers given: a Squarespace account with domains when: getNameservers is called for non-extant domain then: error matches snapshot 1`] = `
+{
+  "errorMessage": "waitForSquarespaceReactRender: content did not render within 60000ms. selector=h2:has-text("Domain Nameservers"), [data-testid="nameservers"]. body preview: ",
+  "errorName": "Error",
+}
+`;

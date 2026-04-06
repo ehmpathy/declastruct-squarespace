@@ -7,6 +7,7 @@ import { refByUnique } from 'domain-objects';
 import { UnexpectedCodePathError } from 'helpful-errors';
 
 import {
+  DeclaredSquarespaceDomainNameservers,
   DeclaredSquarespaceDomainRegistration,
   DeclaredSquarespaceDomainTransferRequest,
   getDeclastructSquarespaceProvider,
@@ -84,5 +85,17 @@ export const getResources = async () => {
     }),
   ]);
 
-  return transferResources;
+  // for first domain, declare nameserver config (cloudflare)
+  // .why = acceptance test coverage for nameservers feature
+  const firstDomain = domains[0];
+  const nameserverResources = firstDomain
+    ? [
+        new DeclaredSquarespaceDomainNameservers({
+          domain: refByUnique<typeof DeclaredSquarespaceDomainRegistration>(firstDomain),
+          nameservers: ['ns1.cloudflare.com', 'ns2.cloudflare.com'],
+        }),
+      ]
+    : [];
+
+  return [...transferResources, ...nameserverResources];
 };
