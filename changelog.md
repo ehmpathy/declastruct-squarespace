@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/ehmpathy/declastruct-squarespace/compare/v0.2.0...v0.2.1) (2026-04-08)
+
+
+### Bug Fixes
+
+* **transferout:** unified resources.ts for transfer-out preparation ([#5](https://github.com/ehmpathy/declastruct-squarespace/issues/5)) ([a168c93](https://github.com/ehmpathy/declastruct-squarespace/commit/a168c938afd3d806cdbff3f046990c067abf7e41))
+
 ## [0.2.0](https://github.com/ehmpathy/declastruct-squarespace/compare/v0.1.0...v0.2.0) (2026-04-06)
 
 
