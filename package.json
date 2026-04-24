@@ -2,7 +2,7 @@
   "name": "declastruct-squarespace",
   "author": "ehmpathy",
   "description": "declarative control of Squarespace constructs via declastruct",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "repository": "ehmpathy/declastruct-squarespace",
   "homepage": "https://github.com/ehmpathy/declastruct-squarespace",
   "keywords": [

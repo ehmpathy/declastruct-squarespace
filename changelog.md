@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.2](https://github.com/ehmpathy/declastruct-squarespace/compare/v0.2.1...v0.2.2) (2026-04-24)
+
+
+### Bug Fixes
+
+* **transferout:** configurable owner and improved handoff workflow ([#7](https://github.com/ehmpathy/declastruct-squarespace/issues/7)) ([059212b](https://github.com/ehmpathy/declastruct-squarespace/commit/059212b3de5906014b98045c42ffae796ad95bc7))
+
 ## [0.2.1](https://github.com/ehmpathy/declastruct-squarespace/compare/v0.2.0...v0.2.1) (2026-04-08)
 
 
