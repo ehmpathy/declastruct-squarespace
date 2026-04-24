@@ -1,11 +1,11 @@
-import { existsSync, readFileSync, readdirSync } from 'fs';
+import { existsSync, readdirSync, readFileSync } from 'fs';
 import { given, then, useBeforeAll, when } from 'test-fns';
 
 import {
   getSampleSquarespaceContext,
   requireSquarespaceCredentials,
 } from '../../.test/getSampleSquarespaceContext';
-import { DeclaredSquarespaceDomainRegistration } from '../../domain.objects/DeclaredSquarespaceDomainRegistration';
+import type { DeclaredSquarespaceDomainRegistration } from '../../domain.objects/DeclaredSquarespaceDomainRegistration';
 import { getAllDomains } from './getAllDomains';
 import { getOneDomain } from './getOneDomain';
 import { setDomain } from './setDomain';
