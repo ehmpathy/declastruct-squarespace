@@ -12,7 +12,6 @@ import type { ContextSquarespaceAgentOptions } from '@src/domain.objects/Context
  */
 export const getSquarespaceAgentOptions = (input: {
   account: {
-    id: string;
     email: string;
   };
   credentials: {
@@ -69,7 +68,7 @@ export const getSquarespaceAgentOptions = (input: {
   const cacheDirectory = input.cache?.directory ?? '.cache/squarespace';
   const remoteStateCache = createOnDiskCache({
     directory: { mounted: { path: cacheDirectory } },
-    expiration: { hours: 24 },
+    expiration: { days: 30 },
   });
 
   return {

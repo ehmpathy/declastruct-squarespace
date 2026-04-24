@@ -23,7 +23,6 @@ export const getProviders = async () => {
   const email = process.env.SQUARESPACE_EMAIL;
   const password = process.env.SQUARESPACE_PASSWORD;
   const totpSecret = process.env.SQUARESPACE_TOTP_SECRET;
-  const accountId = process.env.SQUARESPACE_ACCOUNT_ID ?? 'acceptance-test';
 
   if (!email || !password)
     UnexpectedCodePathError.throw('squarespace credentials required for acceptance tests', {
@@ -32,10 +31,7 @@ export const getProviders = async () => {
 
   // create provider with credentials and browser config from environment
   const provider = getDeclastructSquarespaceProvider({
-    account: {
-      id: accountId,
-      email,
-    },
+    account: { email },
     credentials: {
       email,
       password,

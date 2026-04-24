@@ -5,10 +5,7 @@ import { getDeclastructSquarespaceProvider } from './getDeclastructSquarespacePr
 describe('getDeclastructSquarespaceProvider', () => {
   given('valid input', () => {
     const input = {
-      account: {
-        id: 'test-account-id',
-        email: 'test@example.com',
-      },
+      account: { email: 'test@example.com' },
       credentials: {
         email: 'test@example.com',
         password: 'test-password',
@@ -21,8 +18,8 @@ describe('getDeclastructSquarespaceProvider', () => {
       then('returns a provider with context', () => {
         expect(provider.context).toBeDefined();
         expect(provider.context.agentOptions).toBeDefined();
-        expect(provider.context.agentOptions.account.id).toEqual(
-          'test-account-id',
+        expect(provider.context.agentOptions.account.email).toEqual(
+          'test@example.com',
         );
       });
 
@@ -74,10 +71,7 @@ describe('getDeclastructSquarespaceProvider', () => {
 
   given('input with TOTP secret', () => {
     const input = {
-      account: {
-        id: 'test-account-id',
-        email: 'test@example.com',
-      },
+      account: { email: 'test@example.com' },
       credentials: {
         email: 'test@example.com',
         password: 'test-password',
@@ -99,10 +93,7 @@ describe('getDeclastructSquarespaceProvider', () => {
 
   given('input with custom cache directory', () => {
     const input = {
-      account: {
-        id: 'test-account-id',
-        email: 'test@example.com',
-      },
+      account: { email: 'test@example.com' },
       credentials: {
         email: 'test@example.com',
         password: 'test-password',

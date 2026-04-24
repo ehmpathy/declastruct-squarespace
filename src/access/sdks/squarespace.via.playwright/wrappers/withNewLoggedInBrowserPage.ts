@@ -49,7 +49,7 @@ export const withNewLoggedInBrowserPage = <TInput, TOutput>(
             cache: agentOptions.page.cache,
             serialize: {
               key: () =>
-                [options.reusePageKey, agentOptions.account.id].join('.'),
+                [options.reusePageKey, agentOptions.account.email].join('.'),
             },
           })
         : {

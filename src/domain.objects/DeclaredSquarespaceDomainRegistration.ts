@@ -1,4 +1,5 @@
 import { DomainEntity } from 'domain-objects';
+import type { IsoDateStamp } from 'iso-time';
 
 import type { DeclaredSquarespaceDomainLockReason } from './literals/DeclaredSquarespaceDomainLockReason';
 import type { DeclaredSquarespaceDomainRegistrationStatus } from './literals/DeclaredSquarespaceDomainRegistrationStatus';
@@ -44,7 +45,7 @@ export interface DeclaredSquarespaceDomainRegistration {
    * .what - When the domain registration expires
    * .why - Expired domains have 30-day transfer window
    */
-  expirationDate: string; // ISO date string
+  expirationDate: IsoDateStamp;
 
   /**
    * .what - Whether DNSSEC is enabled

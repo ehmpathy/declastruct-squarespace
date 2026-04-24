@@ -22,6 +22,7 @@ describe('setNameservers', () => {
 
   const TEST_DOMAIN = 'sunshineoceansurferturtles.com';
   const CLOUDFLARE_NS = ['ns1.cloudflare.com', 'ns2.cloudflare.com'];
+  const GOOGLE_NS = ['ns1.google.com', 'ns2.google.com'];
 
   // get context once before all tests
   const context = getSampleSquarespaceContext();
@@ -129,7 +130,99 @@ describe('setNameservers', () => {
     });
   });
 
-  given('[case2] idempotent upsert (same values)', () => {
+  given('[case2] swap custom nameservers (google to cloudflare)', () => {
+    // first set google nameservers
+    const setup = useBeforeAll(async () => {
+      const ns = await setNameservers(
+        {
+          upsert: {
+            domain: { name: TEST_DOMAIN },
+            nameservers: GOOGLE_NS,
+          },
+        },
+        context,
+      );
+      return { ns };
+    });
+
+    when('[t0] after set to google nameservers', () => {
+      then('returns entity with google nameservers', () => {
+        expect(setup.ns.nameservers).toEqual(GOOGLE_NS);
+      });
+    });
+
+    when('[t1] getNameservers confirms google', () => {
+      const result = useBeforeAll(async () => {
+        const ns = await getNameservers(
+          { by: { unique: { domain: { name: TEST_DOMAIN } } } },
+          context,
+        );
+        return { ns };
+      });
+
+      then('returns google nameservers', () => {
+        expect(result.ns.nameservers).toEqual(GOOGLE_NS);
+      });
+    });
+
+    when('[t2] setNameservers upsert to cloudflare', () => {
+      const result = useBeforeAll(async () => {
+        const ns = await setNameservers(
+          {
+            upsert: {
+              domain: { name: TEST_DOMAIN },
+              nameservers: CLOUDFLARE_NS,
+            },
+          },
+          context,
+        );
+        return { ns };
+      });
+
+      then('returns entity with cloudflare nameservers', () => {
+        expect(result.ns.nameservers).toEqual(CLOUDFLARE_NS);
+      });
+
+      then('does NOT contain google nameservers', () => {
+        expect(result.ns.nameservers).not.toContain('ns1.google.com');
+        expect(result.ns.nameservers).not.toContain('ns2.google.com');
+      });
+    });
+
+    when('[t3] getNameservers confirms cloudflare (cache invalidated)', () => {
+      const result = useBeforeAll(async () => {
+        const ns = await getNameservers(
+          { by: { unique: { domain: { name: TEST_DOMAIN } } } },
+          context,
+        );
+        return { ns };
+      });
+
+      then('returns cloudflare nameservers', () => {
+        expect(result.ns.nameservers).toEqual(CLOUDFLARE_NS);
+      });
+
+      then('does NOT return stale google nameservers', () => {
+        expect(result.ns.nameservers).not.toContain('ns1.google.com');
+        expect(result.ns.nameservers).not.toContain('ns2.google.com');
+      });
+    });
+
+    // reset to null for next test (afterAll runs after when blocks, not before)
+    afterAll(async () => {
+      await setNameservers(
+        {
+          upsert: {
+            domain: { name: TEST_DOMAIN },
+            nameservers: null,
+          },
+        },
+        context,
+      );
+    });
+  });
+
+  given('[case3] idempotent upsert (same values)', () => {
     // first set cloudflare nameservers
     const setup = useBeforeAll(async () => {
       const ns = await setNameservers(
@@ -182,8 +275,8 @@ describe('setNameservers', () => {
       });
     });
 
-    // reset to null for next test
-    useBeforeAll(async () => {
+    // reset to null for next test (afterAll runs after when blocks, not before)
+    afterAll(async () => {
       await setNameservers(
         {
           upsert: {
@@ -193,11 +286,10 @@ describe('setNameservers', () => {
         },
         context,
       );
-      return {};
     });
   });
 
-  given('[case3] findsert semantics', () => {
+  given('[case4] findsert semantics', () => {
     when('[t0] findsert with same state as current', () => {
       const result = useBeforeAll(async () => {
         // get current state
@@ -233,7 +325,7 @@ describe('setNameservers', () => {
     });
   });
 
-  given('[case4] validation errors', () => {
+  given('[case5] validation errors', () => {
     when('[t0] fewer than 2 nameservers', () => {
       const result = useBeforeAll(async () => {
         let ns: DeclaredSquarespaceDomainNameservers | null = null;

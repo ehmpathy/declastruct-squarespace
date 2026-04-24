@@ -12,7 +12,27 @@ import { authSelectors } from '../selectors/authSelectors';
 export const checkSessionHealth = async (
   page: Page,
 ): Promise<{ valid: boolean; reason: string | null }> => {
-  // Navigate to a lightweight account page
+  // check if already on an authenticated squarespace page
+  // .note = skip goto to preserve page state (eventual consistency workaround)
+  const currentUrl = page.url();
+  const isOnAuthenticatedPage =
+    currentUrl.includes('account.squarespace.com') &&
+    !currentUrl.includes('/login') &&
+    !currentUrl.includes('/signin');
+
+  if (isOnAuthenticatedPage) {
+    // already on authenticated page - check for login indicators without goto
+    const loginForm = await page.$(authSelectors.loginPage.emailInput);
+    if (loginForm) {
+      return {
+        valid: false,
+        reason: 'session expired: login form detected on current page',
+      };
+    }
+    return { valid: true, reason: null };
+  }
+
+  // navigate to a lightweight account page to verify session
   const testUrl = 'https://account.squarespace.com/domains';
 
   try {

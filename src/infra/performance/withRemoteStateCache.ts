@@ -5,6 +5,7 @@ import { createRemoteStateCacheContext } from 'with-remote-state-cache';
 
 import type { ContextSquarespaceAgent } from '@src/domain.objects/ContextSquarespaceAgent';
 import { DeclaredSquarespaceDomainDnsRecord } from '@src/domain.objects/DeclaredSquarespaceDomainDnsRecord';
+import { DeclaredSquarespaceDomainNameservers } from '@src/domain.objects/DeclaredSquarespaceDomainNameservers';
 import { DeclaredSquarespaceDomainRegistration } from '@src/domain.objects/DeclaredSquarespaceDomainRegistration';
 import { DeclaredSquarespaceDomainTransferRequest } from '@src/domain.objects/DeclaredSquarespaceDomainTransferRequest';
 
@@ -24,8 +25,8 @@ const remoteStateCacheContext = createRemoteStateCacheContext<
     // .note - KeySerializationMethod expects positional args (input, context), not { forInput }
     key: (input: any, context: ContextSquarespaceAgent) => {
       const key = [
-        // Namespace to the account
-        context.agentOptions.account.id,
+        // Namespace to the account (hashed email)
+        asHashSha256(context.agentOptions.account.email).slice(0, 12),
 
         // Preview of key-value pairs for observability
         JSON.stringify(input)
@@ -56,6 +57,7 @@ const remoteStateCacheContext = createRemoteStateCacheContext<
         with: [
           DeclaredSquarespaceDomainRegistration,
           DeclaredSquarespaceDomainDnsRecord,
+          DeclaredSquarespaceDomainNameservers,
           DeclaredSquarespaceDomainTransferRequest,
         ],
       });

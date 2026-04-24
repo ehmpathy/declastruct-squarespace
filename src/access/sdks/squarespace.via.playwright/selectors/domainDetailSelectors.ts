@@ -11,7 +11,11 @@ export const domainDetailSelectors = {
   domainName: 'h1.css-17bjp01, [data-testid="domain-name"]',
   domainStatus: '.css-rezzxq, [data-testid="domain-status"]',
   registrarInfo: '[data-testid="domain-provider"], p:has-text("Provider")',
-  expirationDate: '.css-ey9qic, [data-testid="expiration-date"]',
+  // .note = .css-ey9qic is used for multiple fields (date, WHOIS, lock status)
+  //         use parent container with "Renews On" or "Expires On" label to target correct element
+  //         active domains show "Renews On", expired domains show "Expires On"
+  expirationDate:
+    'div:has(span:has-text("Renews On")) p.css-ey9qic, div:has(span:has-text("Expires On")) p.css-ey9qic, [data-testid="expiration-date"]',
 
   // lock status
   lockStatus: '#domain-lock-toggle-label, span:has-text("Lock")',
@@ -50,6 +54,18 @@ export const domainDetailSelectors = {
     '[role="dialog"]:has-text("custom nameservers will be discarded"), [role="alertdialog"]:has-text("custom nameservers")',
   resetNameserversConfirmButton:
     '[role="dialog"] button:has-text("CONTINUE"), [role="alertdialog"] button:has-text("CONTINUE")',
+
+  // dnssec disable confirmation dialog
+  // .note = appears when nameserver changes require DNSSEC to be disabled first
+  dnssecDisableModal:
+    '[role="dialog"]:has-text("Disable DNSSEC"), [role="alertdialog"]:has-text("Disable DNSSEC")',
+  dnssecDisableContinueButton:
+    '[role="dialog"] button:has-text("CONTINUE"), [role="alertdialog"] button:has-text("CONTINUE")',
+
+  // nameserver error message
+  // .note = appears when squarespace rejects nameserver changes
+  nameserverErrorMessage:
+    '[role="dialog"]:has-text("We were not able to add the nameservers"), [role="alertdialog"]:has-text("We were not able to add the nameservers"), text="We were not able to add the nameservers"',
 
   // whois section
   whoisSection: '[data-testid="whois"], .whois-section',

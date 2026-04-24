@@ -21,29 +21,46 @@ DeclaredSquarespaceDomainNameservers {
 }
 `;
 
-exports[`setNameservers given: [case4] validation errors when: [t0] fewer than 2 nameservers then: full result matches snapshot 1`] = `null`;
-
-exports[`setNameservers given: [case4] validation errors when: [t0] fewer than 2 nameservers then: error matches snapshot 1`] = `
+exports[`setNameservers given: [case5] validation errors when: [t0] fewer than 2 nameservers then: error matches snapshot 1`] = `
 {
-  "errorMessage": "nameservers must have at least 2 entries",
-  "errorName": "BadRequestError",
+  "errorMessage": "BadRequestError: nameservers must have at least 2 entries
+
+{
+  "count": 1,
+  "nameservers": [
+    "ns1.cloudflare.com"
+  ]
+}",
+  "errorName": "Error",
 }
 `;
 
-exports[`setNameservers given: [case4] validation errors when: [t1] invalid FQDN format then: full result matches snapshot 1`] = `null`;
+exports[`setNameservers given: [case5] validation errors when: [t0] fewer than 2 nameservers then: full result matches snapshot 1`] = `null`;
 
-exports[`setNameservers given: [case4] validation errors when: [t1] invalid FQDN format then: error matches snapshot 1`] = `
+exports[`setNameservers given: [case5] validation errors when: [t1] invalid FQDN format then: error matches snapshot 1`] = `
 {
-  "errorMessage": "invalid nameserver format: not-a-valid-fqdn",
-  "errorName": "BadRequestError",
+  "errorMessage": "BadRequestError: invalid nameserver format: not-a-valid-fqdn
+
+{
+  "nameserver": "not-a-valid-fqdn",
+  "hint": "nameserver must be a valid fully qualified domain name"
+}",
+  "errorName": "Error",
 }
 `;
 
-exports[`setNameservers given: [case4] validation errors when: [t2] more than 13 nameservers then: full result matches snapshot 1`] = `null`;
+exports[`setNameservers given: [case5] validation errors when: [t1] invalid FQDN format then: full result matches snapshot 1`] = `null`;
 
-exports[`setNameservers given: [case4] validation errors when: [t2] more than 13 nameservers then: error matches snapshot 1`] = `
+exports[`setNameservers given: [case5] validation errors when: [t2] more than 13 nameservers then: error matches snapshot 1`] = `
 {
-  "errorMessage": "nameservers cannot exceed 13 entries",
-  "errorName": "BadRequestError",
+  "errorMessage": "BadRequestError: nameservers cannot exceed 13 entries
+
+{
+  "count": 14,
+  "hint": "RFC 1035 limits NS records to 13"
+}",
+  "errorName": "Error",
 }
 `;
+
+exports[`setNameservers given: [case5] validation errors when: [t2] more than 13 nameservers then: full result matches snapshot 1`] = `null`;

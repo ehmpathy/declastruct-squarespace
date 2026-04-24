@@ -1,4 +1,5 @@
 import { UnexpectedCodePathError } from 'helpful-errors';
+import { asIsoDateStamp, type IsoDateStamp } from 'iso-time';
 
 import type { RawDomainDetail } from '../../access/sdks/squarespace.via.playwright/domainDetail/scrapeDomainDetail';
 import { DeclaredSquarespaceDomainRegistration } from '../../domain.objects/DeclaredSquarespaceDomainRegistration';
@@ -86,26 +87,37 @@ const parseLockReason = (input: {
 };
 
 /**
- * .what = parses raw expiration date string into ISO date string
+ * .what = parses raw expiration date string into IsoDateStamp
  * .why = raw scraped text like "Dec 15, 2025" needs normalization
  */
 const parseExpirationDate = (input: {
   expirationDate: string | null;
-}): string => {
-  // handle null expiration date
+}): IsoDateStamp => {
+  // fail-fast if no expiration date scraped
   if (!input.expirationDate) {
-    return new Date().toISOString().split('T')[0]!; // default to today
+    throw new UnexpectedCodePathError(
+      'expirationDate is null — selector likely broken',
+      { input },
+    );
   }
+
+  // extract just the date portion (strip " for $XX" suffix if present)
+  const dateOnly = input.expirationDate
+    .replace(/\s+for\s+\$\d+.*$/i, '')
+    .trim();
 
   // try to parse date string
-  const parsed = new Date(input.expirationDate);
+  const parsed = new Date(dateOnly);
   const isValidDate = !isNaN(parsed.getTime());
   if (!isValidDate) {
-    return new Date().toISOString().split('T')[0]!; // default to today if unparseable
+    throw new UnexpectedCodePathError(
+      'expirationDate could not be parsed — format may have changed',
+      { raw: input.expirationDate, dateOnly },
+    );
   }
 
-  // return ISO date string (date only)
-  return parsed.toISOString().split('T')[0]!;
+  // cast to IsoDateStamp via iso-time
+  return asIsoDateStamp(parsed);
 };
 
 /**

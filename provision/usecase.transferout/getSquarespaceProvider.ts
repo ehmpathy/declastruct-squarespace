@@ -3,20 +3,25 @@
  * .why = reusable across all steps, cached for single instantiation
  */
 import type { DeclastructProvider } from 'declastruct';
-import { existsSync, readFileSync } from 'fs';
 import { UnexpectedCodePathError } from 'helpful-errors';
-import { join } from 'path';
 import { keyrack } from 'rhachet/keyrack';
 import { createCache } from 'simple-in-memory-cache';
 import { withSimpleCache } from 'with-simple-cache';
 
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { getDeclastructSquarespaceProvider } from '../../src/contract/sdks/index';
 
 const _getSquarespaceProvider = (): DeclastructProvider => {
   const env = (process.env.ENV ?? 'prod') as 'test' | 'prod';
-  const owner = env === 'test' ? 'ehmpath' : 'default';
 
   // source credentials from keyrack into process.env
+  // .note = OWNER env var enables access to domains from arbitrary squarespace accounts
+  const owner =
+    process.env.OWNER ??
+    (env === 'test'
+      ? 'ehmpath'
+      : UnexpectedCodePathError.throw('OWNER env var required for prod'));
   keyrack.source({ env, owner });
 
   const email = process.env.SQUARESPACE_EMAIL;
@@ -41,7 +46,7 @@ const _getSquarespaceProvider = (): DeclastructProvider => {
   }
 
   return getDeclastructSquarespaceProvider({
-    account: { id: 'transferout', email },
+    account: { email },
     credentials: { email, password, totpSecret: totpSecret ?? undefined },
     browser: { extantBrowserWSEndpoint: browserEndpoint },
     session: { storageStatePath: '.cache/squarespace-session.json' },

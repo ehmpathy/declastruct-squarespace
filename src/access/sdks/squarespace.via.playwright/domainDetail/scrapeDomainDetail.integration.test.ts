@@ -80,6 +80,21 @@ describe('scrapeDomainDetail', () => {
         const detail: RawDomainDetail = result.detail;
         expect(Array.isArray(detail.nameservers)).toBe(true);
       });
+
+      then('detail has expirationDate string', async () => {
+        const detail: RawDomainDetail = result.detail;
+        expect(typeof detail.expirationDate).toBe('string');
+        expect(detail.expirationDate!.length).toBeGreaterThan(0);
+      });
+
+      then('expirationDate looks like a date (snapshot)', async () => {
+        const detail: RawDomainDetail = result.detail;
+        // snapshot to see actual scraped value
+        expect({
+          domain: detail.name,
+          expirationDate: detail.expirationDate,
+        }).toMatchSnapshot();
+      });
     });
   });
 });

@@ -7,7 +7,7 @@ transfer domains out of squarespace to another registrar.
 store credentials in keyrack (default owner, env prod):
 
 ```sh
-npx rhx keyrack set --key SQUARESPACE_EMAIL --env prod
+npx rhx keyrack set --key SQUARESPACE_EMAIL --env prod --vault os.secure
 npx rhx keyrack set --key SQUARESPACE_PASSWORD --env prod --vault os.daemon
 npx rhx keyrack set --key SQUARESPACE_TOTP_SECRET --env prod --vault os.daemon
 ```
@@ -28,13 +28,13 @@ single declastruct run prepares domains for transfer:
 # start browser (--refresh kills extant browser and starts fresh)
 rhx browser.start --mode HEADFUL --refresh
 
-# test env (uses ehmpath owner keyrack)
-ENV=test npx declastruct plan --wish provision/usecase.transferout/resources.ts --into provision/usecase.transferout/plan.json
-ENV=test npx declastruct apply --plan provision/usecase.transferout/plan.json
+# test env (defaults to ehmpath owner)
+ENV=test npx declastruct plan --wish provision/usecase.transferout/resources.ts --into provision/usecase.transferout/plan.local.json
+ENV=test npx declastruct apply --plan provision/usecase.transferout/plan.local.json
 
 # prod env with date filter (domains that expire by may 1st)
-ENV=prod RENEWS_UNTIL=2026-05-01 npx declastruct plan --wish provision/usecase.transferout/resources.ts --into provision/usecase.transferout/plan.json
-ENV=prod npx declastruct apply --plan provision/usecase.transferout/plan.json
+ENV=prod OWNER=myowner RENEWS_UNTIL=2026-05-01 npx declastruct plan --wish provision/usecase.transferout/resources.ts --into provision/usecase.transferout/plan.local.json
+ENV=prod OWNER=myowner npx declastruct apply --plan provision/usecase.transferout/plan.local.json
 ```
 
 ## env vars
@@ -42,7 +42,8 @@ ENV=prod npx declastruct apply --plan provision/usecase.transferout/plan.json
 | var | default | description |
 |-----|---------|-------------|
 | ENV | prod | test or prod |
-| RENEWS_UNTIL | 1 month from now | filter domains that expire by this date |
+| OWNER | ehmpath (test) / required (prod) | keyrack owner for credentials |
+| RENEWS_UNTIL | 2 months from now | filter domains that expire by this date |
 
 ## common issues
 
@@ -60,3 +61,13 @@ re-extract totp secret from authenticator app setup.
 ### browser hangs
 
 check if squarespace is blocked by cloudflare. use headful browser to see page state.
+
+## handoff
+
+after apply completes, extract domain list for the target registrar:
+
+```sh
+jq '[.changes[] | select(.forResource.class == "DeclaredSquarespaceDomainRegistration") | {name: .state.desired.name, expires: .state.desired.expirationDate}] | unique_by(.name)' provision/usecase.transferout/plan.local.json > provision/usecase.transferout/handoff.local.json
+```
+
+use `handoff.local.json` to initiate transfer-in on the target registrar (e.g., cloudflare).
