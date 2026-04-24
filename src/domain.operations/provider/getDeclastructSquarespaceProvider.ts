@@ -17,12 +17,7 @@ export const getDeclastructSquarespaceProvider = (input: {
    */
   account: {
     /**
-     * unique identifier for the account (used for cache namespacing)
-     */
-    id: string;
-
-    /**
-     * account email (for display/logging)
+     * account email (unique identifier)
      */
     email: string;
   };
@@ -115,8 +110,7 @@ export const getDeclastructSquarespaceProvider = (input: {
       afterAll: async () => {
         // close browser session to allow process exit
         // .note - withSimpleCache stores the Promise, not the resolved value
-        const cacheKey = [input.account.id, input.credentials.email].join('.');
-        const browserSession = await agentOptions.browser.cache.get(cacheKey);
+        const browserSession = await agentOptions.browser.cache.get(input.account.email);
         if (browserSession) await browserSession.close();
       },
     },

@@ -64,7 +64,7 @@ describe('castIntoDeclaredSquarespaceDomainRegistration', () => {
       name: 'expired-domain.org',
       status: 'Expired',
       registrar: null,
-      expirationDate: null,
+      expirationDate: 'Jan 1, 2024', // expired in the past
       isLocked: false,
       lockReason: null,
       nameservers: [],

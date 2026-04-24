@@ -15,9 +15,11 @@
  *   ENV=prod npx declastruct apply --plan provision/usecase.transferout/plan.json
  *
  * config:
- *   ENV           = test | prod (default: prod)
- *   RENEWS_UNTIL  = ISO date filter (default: 1 month from now)
- *   nameservers   = edit nameservers.env=test.json or nameservers.env=prod.json
+ *   ENV                   = test | prod (default: prod)
+ *   RENEWS_UNTIL          = ISO date filter (default: 2 months from now)
+ *   FILTER_DOMAIN         = filter to specific domain (e.g., rhoam.org)
+ *   SKIP_TRANSFER_REQUEST = true to skip auth code request (default: false)
+ *   nameservers           = edit nameservers.env=test.json or nameservers.env=prod.json
  */
 import { refByUnique } from 'domain-objects';
 import { readFileSync } from 'fs';
@@ -40,11 +42,17 @@ const config = JSON.parse(readFileSync(configPath, 'utf-8')) as {
 };
 const NAMESERVERS = config.nameservers;
 
-// compute default RENEWS_UNTIL (1 month from now)
+// compute default RENEWS_UNTIL (2 months from now)
 const defaultRenewsUntil = new Date();
-defaultRenewsUntil.setMonth(defaultRenewsUntil.getMonth() + 1);
+defaultRenewsUntil.setMonth(defaultRenewsUntil.getMonth() + 2);
 const RENEWS_UNTIL =
   process.env.RENEWS_UNTIL ?? defaultRenewsUntil.toJSON().split('T')[0]!;
+
+// optional: filter to specific domain
+const FILTER_DOMAIN = process.env.FILTER_DOMAIN ?? null;
+
+// optional: skip transfer request creation
+const SKIP_TRANSFER_REQUEST = process.env.SKIP_TRANSFER_REQUEST === 'true';
 
 /**
  * .what = resource declarations for transfer-out preparation
@@ -58,12 +66,23 @@ export const getResources = async () => {
   // get all domains
   const allDomains = await getAllDomains({}, provider.context);
 
-  // filter: renewal enabled AND expires by RENEWS_UNTIL
+  // filter: renewal enabled AND expires by RENEWS_UNTIL AND not already expired
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
   const renewsUntilDate = new Date(RENEWS_UNTIL);
-  const targetDomains = allDomains.filter(
+  let targetDomains = allDomains.filter(
     (d: DeclaredSquarespaceDomainRegistration) =>
-      d.renewal === 'ENABLED' && new Date(d.expirationDate) <= renewsUntilDate,
+      d.renewal === 'ENABLED' &&
+      new Date(d.expirationDate) >= today &&
+      new Date(d.expirationDate) <= renewsUntilDate,
   );
+
+  // filter: specific domain if FILTER_DOMAIN set
+  if (FILTER_DOMAIN) {
+    targetDomains = targetDomains.filter(
+      (d: DeclaredSquarespaceDomainRegistration) => d.name === FILTER_DOMAIN,
+    );
+  }
 
   // sort by expiration (earliest first)
   const sorted = [...targetDomains].sort(
@@ -76,8 +95,12 @@ export const getResources = async () => {
   console.log(`\n🌊 transfer-out preparation`);
   console.log(`   ├─ env: ${env}`);
   console.log(`   ├─ renews until: ${RENEWS_UNTIL}`);
+  console.log(`   ├─ filter domain: ${FILTER_DOMAIN ?? '(none)'}`);
+  console.log(`   ├─ skip transfer request: ${SKIP_TRANSFER_REQUEST}`);
   console.log(`   └─ nameservers: ${NAMESERVERS.join(', ')}`);
-  console.log(`\n🐚 ${sorted.length} domain(s) to prepare:`);
+  console.log(
+    `\n🐚 ${sorted.length}/${allDomains.length} domain(s) to prepare:`,
+  );
   sorted.forEach((domain, i) => {
     const isLast = i === sorted.length - 1;
     const branch = isLast ? '└─' : '├─';
@@ -116,14 +139,16 @@ export const getResources = async () => {
       }),
     );
 
-    // declare: auth code requested
-    resources.push(
-      new DeclaredSquarespaceDomainTransferRequest({
-        domain: domainRef,
-        requestedAt: new Date().toJSON(),
-        status: 'REQUESTED',
-      }),
-    );
+    // declare: auth code requested (optional)
+    if (!SKIP_TRANSFER_REQUEST) {
+      resources.push(
+        new DeclaredSquarespaceDomainTransferRequest({
+          domain: domainRef,
+          requestedAt: new Date().toJSON(),
+          status: 'REQUESTED',
+        }),
+      );
+    }
   }
 
   return resources;

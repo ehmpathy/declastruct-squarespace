@@ -42,10 +42,7 @@ export const getSampleSquarespaceProvider = () => {
 
   // create provider with credentials from environment
   const provider = getDeclastructSquarespaceProvider({
-    account: {
-      id: process.env.SQUARESPACE_ACCOUNT_ID ?? 'integration-test',
-      email,
-    },
+    account: { email },
     credentials: {
       email,
       password,

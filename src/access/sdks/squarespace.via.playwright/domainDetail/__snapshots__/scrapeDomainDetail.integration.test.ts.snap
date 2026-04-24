@@ -1,0 +1,8 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`scrapeDomainDetail given: a logged-in browser session with at least one domain when: scraping a domain detail page then: expirationDate looks like a date (snapshot) 1`] = `
+{
+  "domain": "sunshineoceansurferturtles.com",
+  "expirationDate": "March 19, 2027 for $20",
+}
+`;

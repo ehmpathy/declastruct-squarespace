@@ -11,6 +11,7 @@ import type { ContextSquarespaceAgentOptions } from '@src/domain.objects/Context
 
 import { checkSessionHealth } from '../auth/checkSessionHealth';
 import { performSquarespaceLogin } from '../auth/performSquarespaceLogin';
+import { verifyLoggedInEmail } from '../auth/verifyLoggedInEmail';
 import { stealthChromium as chromium } from './stealthChromium';
 
 /**
@@ -143,6 +144,10 @@ const createBrowserAuthSession = async (
     await writeStorageState({ context, path: storageStatePath });
   }
 
+  // verify logged-in email matches expected credentials
+  // .why - prevent cache pollution from wrong-account sessions
+  await verifyLoggedInEmail(testPage, agentOptions.credentials.email);
+
   await testPage.close();
 
   // create mutable handle that supports respawn
@@ -228,7 +233,7 @@ export const genBrowserAuthSession = async (
   const createWithCache = withSimpleCache(createBrowserAuthSession, {
     cache: agentOptions.browser.cache,
     serialize: {
-      key: (opts) => [opts.account.id, opts.credentials.email].join('.'),
+      key: (opts) => opts.account.email,
     },
   });
 

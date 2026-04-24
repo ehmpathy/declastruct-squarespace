@@ -112,6 +112,24 @@ export const setNameserversScraper = async (input: {
       .locator(domainDetailSelectors.editNameserversButton)
       .first();
     await editButton.click();
+    await page.waitForTimeout(1000);
+
+    // handle DNSSEC disable confirmation (may appear before edit modal if DNSSEC enabled)
+    const dnssecModalBeforeEdit = page.locator(
+      domainDetailSelectors.dnssecDisableModal,
+    );
+    const dnssecModalBeforeEditVisible = await dnssecModalBeforeEdit.isVisible();
+    if (dnssecModalBeforeEditVisible) {
+      await emitBrowserMovieFrame({
+        page,
+        frame: { name: 'dnssec-disable-before-edit' },
+      });
+      const continueButton = page
+        .locator(domainDetailSelectors.dnssecDisableContinueButton)
+        .first();
+      await continueButton.click();
+      await page.waitForTimeout(2000);
+    }
 
     // wait for modal to appear
     await page.waitForSelector(domainDetailSelectors.nameserverEditModal, {
@@ -170,6 +188,21 @@ export const setNameserversScraper = async (input: {
     await saveButton.click();
     await page.waitForTimeout(2000);
 
+    // handle DNSSEC disable confirmation (may appear if domain has DNSSEC enabled)
+    const dnssecModal = page.locator(domainDetailSelectors.dnssecDisableModal);
+    const dnssecModalVisible = await dnssecModal.isVisible();
+    if (dnssecModalVisible) {
+      await emitBrowserMovieFrame({
+        page,
+        frame: { name: 'dnssec-disable-confirm' },
+      });
+      const continueButton = page
+        .locator(domainDetailSelectors.dnssecDisableContinueButton)
+        .first();
+      await continueButton.click();
+      await page.waitForTimeout(2000);
+    }
+
     // handle reauthentication again (may appear after save click)
     await handleReauthentication(page, credentials);
 
@@ -200,6 +233,29 @@ export const setNameserversScraper = async (input: {
     page,
     frame: { name: 'nameservers-verified' },
   });
+
+  // fail-fast if verified nameservers don't match requested
+  // .note = serialization comparison handles null vs empty array edge cases
+  const requestedSerialized = JSON.stringify(nameservers);
+  const verifiedSerialized = JSON.stringify(verified.nameservers);
+  if (requestedSerialized !== verifiedSerialized) {
+    // retry verification once after short delay (squarespace UI may need to settle)
+    await page.waitForTimeout(3000);
+    const verifiedRetry = await getNameserversScraper({ page, domain });
+    const verifiedRetrySerialized = JSON.stringify(verifiedRetry.nameservers);
+
+    if (requestedSerialized !== verifiedRetrySerialized) {
+      return {
+        success: false,
+        nameservers: verifiedRetry.nameservers,
+      };
+    }
+
+    return {
+      success: true,
+      nameservers: verifiedRetry.nameservers,
+    };
+  }
 
   return {
     success: true,

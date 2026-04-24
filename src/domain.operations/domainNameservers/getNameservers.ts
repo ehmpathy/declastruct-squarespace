@@ -6,6 +6,7 @@ import { withNewLoggedInBrowserPage } from '../../access/sdks/squarespace.via.pl
 import type { ContextSquarespaceAgentPage } from '../../domain.objects/ContextSquarespaceAgent';
 import { DeclaredSquarespaceDomainNameservers } from '../../domain.objects/DeclaredSquarespaceDomainNameservers';
 import type { DeclaredSquarespaceDomainRegistration } from '../../domain.objects/DeclaredSquarespaceDomainRegistration';
+import { withRemoteStateQueryCache } from '../../infra/performance/withRemoteStateCache';
 
 /**
  * .what = internal implementation of getNameservers
@@ -40,9 +41,27 @@ const getNameserversFromPage = async (
 };
 
 /**
+ * .what = cache-wrapped getNameservers operation
+ * .why = enables cache invalidation via addTriggerToGetNameservers
+ */
+const {
+  execute: getNameserversWithCache,
+  addTrigger: addTriggerToGetNameservers,
+} = withRemoteStateQueryCache(
+  withNewLoggedInBrowserPage(getNameserversFromPage, {
+    reusePageKey: 'domainNameservers',
+  }),
+  { name: 'getNameservers' },
+);
+
+/**
  * .what = gets nameservers for a domain
  * .why = enables lookup of domain nameserver configuration
  */
-export const getNameservers = withNewLoggedInBrowserPage(
-  getNameserversFromPage,
-);
+export const getNameservers = getNameserversWithCache;
+
+/**
+ * .what = registers a trigger to invalidate getNameservers cache
+ * .why = mutations that change nameservers should invalidate this cache
+ */
+export { addTriggerToGetNameservers };

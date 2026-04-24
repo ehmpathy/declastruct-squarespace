@@ -1,11 +1,36 @@
+import { existsSync, readFileSync, readdirSync } from 'fs';
 import { given, then, useBeforeAll, when } from 'test-fns';
 
 import {
   getSampleSquarespaceContext,
   requireSquarespaceCredentials,
 } from '../../.test/getSampleSquarespaceContext';
+import { DeclaredSquarespaceDomainRegistration } from '../../domain.objects/DeclaredSquarespaceDomainRegistration';
+import { getAllDomains } from './getAllDomains';
 import { getOneDomain } from './getOneDomain';
 import { setDomain } from './setDomain';
+
+/**
+ * .what = helper to find and read the getAllDomains cache file
+ * .why = allows inspection of cache to verify it was updated, not invalidated
+ */
+const getAllDomainsCacheFile = (): {
+  path: string;
+  content: string;
+  parsed: { value: unknown[] };
+} | null => {
+  const cacheDir = '.cache/squarespace';
+  if (!existsSync(cacheDir)) return null;
+
+  const files = readdirSync(cacheDir);
+  const cacheFile = files.find((f) => f.startsWith('getAllDomains.'));
+  if (!cacheFile) return null;
+
+  const path = `${cacheDir}/${cacheFile}`;
+  const content = readFileSync(path, 'utf-8');
+  const parsed = JSON.parse(content);
+  return { path, content, parsed };
+};
 
 /**
  * .what = integration test for setDomain renewal toggle
@@ -121,6 +146,76 @@ describe('setDomain.renewal', () => {
         expect(findsertResult.result.renewal).toBe(
           findsertResult.domain.renewal,
         );
+      });
+    });
+  });
+
+  given('[case3] setDomain updates cache in place (not invalidate)', () => {
+    const cacheUpdateResult = useBeforeAll(async () => {
+      // 1. call getAllDomains to ensure cache is populated
+      const domainsBefore = await getAllDomains({}, context);
+      const domainBefore = domainsBefore.find(
+        (d: DeclaredSquarespaceDomainRegistration) => d.name === TEST_DOMAIN,
+      );
+      if (!domainBefore) throw new Error(`domain not found: ${TEST_DOMAIN}`);
+
+      // 2. read cache file before mutation
+      const cacheBefore = getAllDomainsCacheFile();
+      if (!cacheBefore) throw new Error('cache file not found before mutation');
+
+      // 3. toggle renewal via setDomain
+      const originalState = domainBefore.renewal;
+      const targetState = originalState === 'ENABLED' ? 'DISABLED' : 'ENABLED';
+      await setDomain(
+        { upsert: { name: TEST_DOMAIN, renewal: targetState } },
+        context,
+      );
+
+      // 4. read cache file after mutation (should still exist, not deleted)
+      const cacheAfter = getAllDomainsCacheFile();
+
+      // 5. restore original state
+      await setDomain(
+        { upsert: { name: TEST_DOMAIN, renewal: originalState } },
+        context,
+      );
+
+      // 6. read cache after restore
+      const cacheAfterRestore = getAllDomainsCacheFile();
+
+      return {
+        originalState,
+        targetState,
+        cacheBefore,
+        cacheAfter,
+        cacheAfterRestore,
+      };
+    });
+
+    when('[t0] setDomain mutates a domain', () => {
+      then('cache file still exists (not deleted)', () => {
+        expect(cacheUpdateResult.cacheAfter).not.toBeNull();
+        expect(cacheUpdateResult.cacheAfter?.path).toBe(
+          cacheUpdateResult.cacheBefore.path,
+        );
+      });
+
+      then('cache contains updated domain with new renewal state', () => {
+        const domainsInCache = cacheUpdateResult.cacheAfter?.parsed
+          .value as Array<{ name: string; renewal: string }>;
+        const domainInCache = domainsInCache?.find(
+          (d) => d.name === TEST_DOMAIN,
+        );
+        expect(domainInCache?.renewal).toBe(cacheUpdateResult.targetState);
+      });
+
+      then('cache is restored after second mutation', () => {
+        const domainsInCache = cacheUpdateResult.cacheAfterRestore?.parsed
+          .value as Array<{ name: string; renewal: string }>;
+        const domainInCache = domainsInCache?.find(
+          (d) => d.name === TEST_DOMAIN,
+        );
+        expect(domainInCache?.renewal).toBe(cacheUpdateResult.originalState);
       });
     });
   });

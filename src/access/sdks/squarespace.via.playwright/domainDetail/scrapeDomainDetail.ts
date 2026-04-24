@@ -38,8 +38,12 @@ export const scrapeDomainDetail = async (input: {
   if (!isAlreadyOnPage) {
     await page.goto(expectedUrl);
     await page.waitForLoadState('load');
-    // wait for React to render (not just body - body has noscript fallback immediately)
-    await waitForSquarespaceReactRender({ page });
+    // wait for React to render AND for expiration date element to appear
+    // .note = must wait for specific content, not just shell
+    await waitForSquarespaceReactRender({
+      page,
+      forContent: domainDetailSelectors.expirationDate,
+    });
   }
 
   // fail-fast: assert URL AFTER content load

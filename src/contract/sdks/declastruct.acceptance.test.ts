@@ -507,10 +507,7 @@ describe('declastruct CLI workflow', () => {
 
         // create provider
         const provider = getDeclastructSquarespaceProvider({
-          account: {
-            id: 'acceptance-test',
-            email,
-          },
+          account: { email },
           credentials: {
             email,
             password,

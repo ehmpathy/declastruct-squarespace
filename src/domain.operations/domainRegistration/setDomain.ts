@@ -216,13 +216,32 @@ const setDomainMutation = withRemoteStateMutationRegistration(
   { name: { override: 'setDomain' } },
 );
 
-// register cache invalidation trigger
+// register cache update trigger (mutate cache in place, don't invalidate)
 addTriggerToGetAllDomains({
-  invalidatedBy: {
+  updatedBy: {
     mutation: setDomainMutation,
     affects: ({ cachedQueryKeys }: { cachedQueryKeys: string[] }) => ({
-      keys: cachedQueryKeys,
+      // filter to only getAllDomains cache keys (not getNameservers, etc.)
+      keys: cachedQueryKeys.filter((key) => key.startsWith('getAllDomains.')),
     }),
+    update: async ({
+      from: { cachedQueryOutput },
+      with: { mutationOutput },
+    }: {
+      // .note = cachedQueryOutput is wrapped in a Promise by with-remote-state-cache
+      from: { cachedQueryOutput: Promise<DeclaredSquarespaceDomainRegistration[]> };
+      // .note = mutationOutput is null on pre-mutation call, present on post-mutation
+      with: { mutationOutput: DeclaredSquarespaceDomainRegistration | null };
+    }) => {
+      // await the cached output (it's wrapped in a promise by the cache lib)
+      const domains = await cachedQueryOutput;
+      // skip update on pre-mutation call (mutationOutput is null before mutation runs)
+      if (!mutationOutput) return domains;
+      // replace the updated domain in the cached list
+      return domains.map((domain) =>
+        domain.name === mutationOutput.name ? mutationOutput : domain,
+      );
+    },
   },
 });
 

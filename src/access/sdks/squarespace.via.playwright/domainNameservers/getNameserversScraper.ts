@@ -19,29 +19,69 @@ export const getNameserversScraper = async (input: {
   const { page, domain } = input;
   const targetUrl = `https://account.squarespace.com/domains/managed/${domain}/dns/domain-nameservers`;
 
-  // navigate to nameservers page
-  // .note = always reload to ensure fresh content from server
-  await page.goto(targetUrl);
-  await page.waitForLoadState('load');
+  // skip navigation if already on nameservers page (preserve fresh state from setNameservers)
+  // .note = squarespace has eventual consistency; re-navigation may return stale data
+  // .note = when page is already on correct URL, current DOM has the authoritative state
+  const currentUrl = page.url();
+  const isAlreadyOnPage = currentUrl.includes(
+    `/domains/managed/${domain}/dns/domain-nameservers`,
+  );
+  console.log(
+    `[getNameserversScraper] isAlreadyOnPage=${isAlreadyOnPage} currentUrl=${currentUrl}`,
+  );
 
-  // wait for React to fully hydrate
-  await waitForSquarespaceReactRender({
-    page,
-    forContent: domainDetailSelectors.nameserversSection,
-  });
-  await emitBrowserMovieFrame({
-    page,
-    frame: { name: 'get-nameservers-ready' },
-  });
+  if (!isAlreadyOnPage) {
+    // set headers to bypass server/CDN cache
+    await page.setExtraHTTPHeaders({
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+      Pragma: 'no-cache',
+    });
+
+    // navigate to nameservers page
+    await page.goto(targetUrl);
+    await page.waitForLoadState('load');
+
+    // wait for React to fully hydrate - only after fresh navigation
+    await waitForSquarespaceReactRender({
+      page,
+      forContent: domainDetailSelectors.nameserversSection,
+    });
+    await emitBrowserMovieFrame({
+      page,
+      frame: { name: 'get-nameservers-ready' },
+    });
+
+    // wait for page to settle before button state read
+    await page.waitForTimeout(1000);
+  }
+  // else: trust current DOM state from setNameservers; avoid React refresh
 
   // determine if squarespace default or custom via button visibility
   // .note = squarespace default nameservers are actually googledomains.com, not squarespace.com
   // .note = if "USE SQUARESPACE NAMESERVERS" button is visible, domain has custom NS
   // .note = if "USE CUSTOM NAMESERVERS" button is visible, domain has squarespace default
-  const resetButtonVisible = await page
+  const resetButtonLocator = page
     .locator(domainDetailSelectors.useSquarespaceNameserversButton)
-    .first()
-    .isVisible();
+    .first();
+  const editButtonLocator = page
+    .locator(domainDetailSelectors.editNameserversButton)
+    .first();
+
+  const resetButtonVisible = await resetButtonLocator.isVisible();
+  const editButtonVisible = await editButtonLocator.isVisible();
+
+  // diagnostic: log button visibility for debug
+  console.log(
+    `[getNameserversScraper] domain=${domain} resetButtonVisible=${resetButtonVisible} editButtonVisible=${editButtonVisible} url=${page.url()}`,
+  );
+
+  // fail-fast if neither button is visible (page not fully rendered)
+  if (!resetButtonVisible && !editButtonVisible) {
+    throw new Error(
+      `getNameserversScraper: neither reset nor edit button visible. page may not have fully rendered. url=${page.url()}`,
+    );
+  }
+
   const isSquarespaceDefault = !resetButtonVisible;
 
   // return null for squarespace default

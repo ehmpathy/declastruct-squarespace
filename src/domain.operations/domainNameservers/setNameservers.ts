@@ -10,7 +10,8 @@ import type {
 } from '../../domain.objects/ContextSquarespaceAgent';
 import { DeclaredSquarespaceDomainNameservers } from '../../domain.objects/DeclaredSquarespaceDomainNameservers';
 import type { DeclaredSquarespaceDomainRegistration } from '../../domain.objects/DeclaredSquarespaceDomainRegistration';
-import { getNameservers } from './getNameservers';
+import { withRemoteStateMutationRegistration } from '../../infra/performance/withRemoteStateCache';
+import { addTriggerToGetNameservers, getNameservers } from './getNameservers';
 import { validateNameserversInput } from './validateNameserversInput';
 
 type SetNameserversInput = PickOne<{
@@ -121,7 +122,43 @@ const setNameserversWithPage = async (
 };
 
 /**
+ * .what = mutation-registered setNameservers operation
+ * .why = enables cache invalidation of getNameservers on mutation
+ */
+const setNameserversMutation = withRemoteStateMutationRegistration(
+  setNameserversWithPage,
+  { name: { override: 'setNameservers' } },
+);
+
+// register cache invalidation trigger
+addTriggerToGetNameservers({
+  invalidatedBy: {
+    mutation: setNameserversMutation,
+    affects: ({
+      cachedQueryKeys,
+      mutationInput,
+    }: {
+      cachedQueryKeys: string[];
+      // .note = mutationInput is the args tuple [input, context], not just input
+      mutationInput: [SetNameserversInput, ContextSquarespaceAgent];
+    }) => {
+      // extract domain name from mutation input (first element of args tuple)
+      const [input] = mutationInput;
+      const domainName = (input.findsert ?? input.upsert)?.domain?.name;
+      if (!domainName) return { keys: [] };
+
+      // filter to only cache keys that contain this domain name
+      // .note = cache key format removes dots (regex [^0-9a-z_] strips them)
+      const keysToInvalidate = cachedQueryKeys.filter((key) =>
+        key.includes(domainName.replace(/\./g, '')),
+      );
+      return { keys: keysToInvalidate };
+    },
+  },
+});
+
+/**
  * .what = sets nameservers for a domain
  * .why = enables declarative control over domain nameserver configuration
  */
-export const setNameservers = setNameserversWithPage;
+export const setNameservers = setNameserversMutation.execute;

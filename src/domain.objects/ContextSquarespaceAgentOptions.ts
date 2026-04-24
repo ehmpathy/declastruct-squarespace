@@ -11,16 +11,11 @@ import type { BrowserAuthSession } from './BrowserAuthSession';
  */
 export interface ContextSquarespaceAgentOptions {
   /**
-   * Account being operated on
+   * Account to operate on
    */
   account: {
     /**
-     * Unique identifier for cache namespacing
-     */
-    id: string;
-
-    /**
-     * Account email (for display/logging)
+     * Account email (unique identifier)
      */
     email: string;
   };
