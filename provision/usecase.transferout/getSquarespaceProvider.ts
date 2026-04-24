@@ -3,13 +3,13 @@
  * .why = reusable across all steps, cached for single instantiation
  */
 import type { DeclastructProvider } from 'declastruct';
-import { existsSync, readFileSync } from 'fs';
 import { UnexpectedCodePathError } from 'helpful-errors';
-import { join } from 'path';
 import { keyrack } from 'rhachet/keyrack';
 import { createCache } from 'simple-in-memory-cache';
 import { withSimpleCache } from 'with-simple-cache';
 
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { getDeclastructSquarespaceProvider } from '../../src/contract/sdks/index';
 
 const _getSquarespaceProvider = (): DeclastructProvider => {

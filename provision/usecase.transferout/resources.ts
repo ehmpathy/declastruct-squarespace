@@ -21,11 +21,12 @@
  *   SKIP_TRANSFER_REQUEST = true to skip auth code request (default: false)
  *   nameservers           = edit nameservers.env=test.json or nameservers.env=prod.json
  */
-import { refByUnique } from 'domain-objects';
-import { readFileSync } from 'fs';
-import { UnexpectedCodePathError } from 'helpful-errors';
-import { join } from 'path';
 
+import { refByUnique } from 'domain-objects';
+import { UnexpectedCodePathError } from 'helpful-errors';
+
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { DeclaredSquarespaceDomainNameservers } from '../../src/domain.objects/DeclaredSquarespaceDomainNameservers';
 import { DeclaredSquarespaceDomainRegistration } from '../../src/domain.objects/DeclaredSquarespaceDomainRegistration';
 import { DeclaredSquarespaceDomainTransferRequest } from '../../src/domain.objects/DeclaredSquarespaceDomainTransferRequest';

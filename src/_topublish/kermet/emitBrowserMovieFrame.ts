@@ -1,7 +1,8 @@
-import * as fs from 'fs';
-import * as path from 'path';
 import type { Page } from 'playwright';
 import { withTimeout } from 'wrapper-fns';
+
+import * as fs from 'node:fs';
+import * as path from 'node:path';
 
 /**
  * .what = captures debug screenshot + html as a frame in a browser movie

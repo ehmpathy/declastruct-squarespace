@@ -110,7 +110,9 @@ export const getDeclastructSquarespaceProvider = (input: {
       afterAll: async () => {
         // close browser session to allow process exit
         // .note - withSimpleCache stores the Promise, not the resolved value
-        const browserSession = await agentOptions.browser.cache.get(input.account.email);
+        const browserSession = await agentOptions.browser.cache.get(
+          input.account.email,
+        );
         if (browserSession) await browserSession.close();
       },
     },
