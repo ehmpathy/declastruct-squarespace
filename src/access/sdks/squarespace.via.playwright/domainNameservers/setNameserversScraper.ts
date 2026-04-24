@@ -118,8 +118,7 @@ export const setNameserversScraper = async (input: {
     const dnssecModalBeforeEdit = page.locator(
       domainDetailSelectors.dnssecDisableModal,
     );
-    const dnssecModalBeforeEditVisible =
-      await dnssecModalBeforeEdit.isVisible();
+    const dnssecModalBeforeEditVisible = await dnssecModalBeforeEdit.isVisible();
     if (dnssecModalBeforeEditVisible) {
       await emitBrowserMovieFrame({
         page,

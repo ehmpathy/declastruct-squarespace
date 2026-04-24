@@ -229,9 +229,7 @@ addTriggerToGetAllDomains({
       with: { mutationOutput },
     }: {
       // .note = cachedQueryOutput is wrapped in a Promise by with-remote-state-cache
-      from: {
-        cachedQueryOutput: Promise<DeclaredSquarespaceDomainRegistration[]>;
-      };
+      from: { cachedQueryOutput: Promise<DeclaredSquarespaceDomainRegistration[]> };
       // .note = mutationOutput is null on pre-mutation call, present on post-mutation
       with: { mutationOutput: DeclaredSquarespaceDomainRegistration | null };
     }) => {

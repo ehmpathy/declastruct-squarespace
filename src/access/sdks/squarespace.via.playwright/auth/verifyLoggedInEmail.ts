@@ -51,10 +51,7 @@ export const verifyLoggedInEmail = async (
 
     throw new BadRequestError(
       'verifyLoggedInEmail: could not find any email in avatar dropdown',
-      {
-        url: page.url(),
-        dropdownContentPreview: dropdownContent?.slice(0, 500),
-      },
+      { url: page.url(), dropdownContentPreview: dropdownContent?.slice(0, 500) },
     );
   }
 
