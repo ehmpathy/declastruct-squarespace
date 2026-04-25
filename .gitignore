@@ -1,5 +1,6 @@
 *.local.json
 *.bak.json
+*.env=prod.json
 *.log
 *.tsbuildinfo
 .artifact

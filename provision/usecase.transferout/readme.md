@@ -14,7 +14,19 @@ npx rhx keyrack set --key SQUARESPACE_TOTP_SECRET --env prod --vault os.daemon
 
 ## config
 
+### nameservers
+
 edit `nameservers.env=test.json` or `nameservers.env=prod.json` to set target nameservers.
+
+### exclusions
+
+edit `exclusions.env=test.json` or `exclusions.env=prod.json` to exclude domains from transfer-out.
+
+**why exclusions exist:** squarespace assigns different cloudflare nameservers to different accounts. when you add a new domain or create a new account, squarespace may assign a different pair of nameservers (e.g., `bryce.ns.cloudflare.com` + `itzel.ns.cloudflare.com` vs `randy.ns.cloudflare.com` + `val.ns.cloudflare.com`).
+
+domains registered under an older account may have different nameservers already configured in cloudflare. if transfer-out runs on these domains, it would overwrite their nameservers with the current config, which would break dns resolution until cloudflare is updated.
+
+to protect these domains, add them to the exclusions list and handle them separately (either with a different nameserver config or manual transfer).
 
 ## usage
 
@@ -44,6 +56,8 @@ ENV=prod OWNER=myowner npx declastruct apply --plan provision/usecase.transferou
 | ENV | prod | test or prod |
 | OWNER | ehmpath (test) / required (prod) | keyrack owner for credentials |
 | RENEWS_UNTIL | 2 months from now | filter domains that expire by this date |
+| FILTER_DOMAIN | (none) | filter to specific domain (e.g., rhoam.org) |
+| SKIP_TRANSFER_REQUEST | false | set to `true` to skip auth code request |
 
 ## common issues
 

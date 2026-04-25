@@ -20,6 +20,7 @@
  *   FILTER_DOMAIN         = filter to specific domain (e.g., rhoam.org)
  *   SKIP_TRANSFER_REQUEST = true to skip auth code request (default: false)
  *   nameservers           = edit nameservers.env=test.json or nameservers.env=prod.json
+ *   exclusions            = edit exclusions.env=test.json or exclusions.env=prod.json
  */
 
 import { refByUnique } from 'domain-objects';
@@ -37,11 +38,18 @@ export { getProviders };
 
 // load nameservers from env-specific config
 const env = process.env.ENV ?? 'prod';
-const configPath = join(__dirname, `nameservers.env=${env}.json`);
-const config = JSON.parse(readFileSync(configPath, 'utf-8')) as {
+const nameserversPath = join(__dirname, `nameservers.env=${env}.json`);
+const nameserversConfig = JSON.parse(readFileSync(nameserversPath, 'utf-8')) as {
   nameservers: string[];
 };
-const NAMESERVERS = config.nameservers;
+const NAMESERVERS = nameserversConfig.nameservers;
+
+// load exclusions from env-specific config
+const exclusionsPath = join(__dirname, `exclusions.env=${env}.json`);
+const exclusionsConfig = JSON.parse(readFileSync(exclusionsPath, 'utf-8')) as {
+  exclusions: string[];
+};
+const EXCLUSIONS = new Set(exclusionsConfig.exclusions);
 
 // compute default RENEWS_UNTIL (2 months from now)
 const defaultRenewsUntil = new Date();
@@ -85,6 +93,14 @@ export const getResources = async () => {
     );
   }
 
+  // filter: exclude domains in exclusion list
+  const excludedDomains = targetDomains.filter(
+    (d: DeclaredSquarespaceDomainRegistration) => EXCLUSIONS.has(d.name),
+  );
+  targetDomains = targetDomains.filter(
+    (d: DeclaredSquarespaceDomainRegistration) => !EXCLUSIONS.has(d.name),
+  );
+
   // sort by expiration (earliest first)
   const sorted = [...targetDomains].sort(
     (a, b) =>
@@ -98,7 +114,16 @@ export const getResources = async () => {
   console.log(`   ├─ renews until: ${RENEWS_UNTIL}`);
   console.log(`   ├─ filter domain: ${FILTER_DOMAIN ?? '(none)'}`);
   console.log(`   ├─ skip transfer request: ${SKIP_TRANSFER_REQUEST}`);
-  console.log(`   └─ nameservers: ${NAMESERVERS.join(', ')}`);
+  console.log(`   ├─ nameservers: ${NAMESERVERS.join(', ')}`);
+  console.log(`   └─ exclusions: ${EXCLUSIONS.size} domain(s)`);
+  if (excludedDomains.length > 0) {
+    console.log(`\n🫧 ${excludedDomains.length} domain(s) excluded:`);
+    excludedDomains.forEach((domain, i) => {
+      const isLast = i === excludedDomains.length - 1;
+      const branch = isLast ? '└─' : '├─';
+      console.log(`   ${branch} ${domain.name}`);
+    });
+  }
   console.log(
     `\n🐚 ${sorted.length}/${allDomains.length} domain(s) to prepare:`,
   );
