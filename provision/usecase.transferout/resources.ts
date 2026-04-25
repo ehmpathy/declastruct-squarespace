@@ -39,7 +39,9 @@ export { getProviders };
 // load nameservers from env-specific config
 const env = process.env.ENV ?? 'prod';
 const nameserversPath = join(__dirname, `nameservers.env=${env}.json`);
-const nameserversConfig = JSON.parse(readFileSync(nameserversPath, 'utf-8')) as {
+const nameserversConfig = JSON.parse(
+  readFileSync(nameserversPath, 'utf-8'),
+) as {
   nameservers: string[];
 };
 const NAMESERVERS = nameserversConfig.nameservers;
@@ -118,11 +120,13 @@ export const getResources = async () => {
   console.log(`   └─ exclusions: ${EXCLUSIONS.size} domain(s)`);
   if (excludedDomains.length > 0) {
     console.log(`\n🫧 ${excludedDomains.length} domain(s) excluded:`);
-    excludedDomains.forEach((domain, i) => {
-      const isLast = i === excludedDomains.length - 1;
-      const branch = isLast ? '└─' : '├─';
-      console.log(`   ${branch} ${domain.name}`);
-    });
+    excludedDomains.forEach(
+      (domain: DeclaredSquarespaceDomainRegistration, i: number) => {
+        const isLast = i === excludedDomains.length - 1;
+        const branch = isLast ? '└─' : '├─';
+        console.log(`   ${branch} ${domain.name}`);
+      },
+    );
   }
   console.log(
     `\n🐚 ${sorted.length}/${allDomains.length} domain(s) to prepare:`,
